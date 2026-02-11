@@ -1,0 +1,4 @@
+locations:
+- code_source:
+    module_name: crypto_pipeline.definitions
+  location_name: crypto_pipeline
