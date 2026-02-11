@@ -1,0 +1,4 @@
+[tool.dagster]
+module_name = "crypto_pipeline.definitions"
+definitions_module = "crypto_pipeline.definitions"
+code_location_name = "crypto_pipeline"
