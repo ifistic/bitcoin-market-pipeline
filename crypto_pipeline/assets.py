@@ -1,3 +1,4 @@
+import os
 import requests
 import pandas as pd
 import s3fs
@@ -32,6 +33,30 @@ EXPECTED_COLUMNS = [
     "total_supply", "max_supply", "ath", "ath_change_percentage",
     "ath_date", "atl", "atl_change_percentage", "atl_date", "last_updated"
 ]
+
+# ================================
+# AWS CREDENTIALS
+# ================================
+
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
+
+# Helper to get S3 filesystem with env credentials
+def get_s3fs():
+    return s3fs.S3FileSystem(
+        key=AWS_ACCESS_KEY_ID,
+        secret=AWS_SECRET_ACCESS_KEY,
+        client_kwargs={"region_name": AWS_DEFAULT_REGION},
+    )
+
+def get_boto3_client(service_name):
+    return boto3.client(
+        service_name,
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        region_name=AWS_DEFAULT_REGION
+    )
 
 # ================================
 # DATABASE LOGGER
@@ -94,7 +119,7 @@ def log_failure(step_name, exc, run_id=None):
 
 def send_sns(message):
     try:
-        client = boto3.client("sns", region_name="us-east-1")
+        client = get_boto3_client("sns")
         client.publish(TopicArn=SNS_TOPIC_ARN, Message=message)
     except Exception as e:
         print(" SNS failed:", e)
@@ -167,7 +192,7 @@ def coingecko_crypto_market():
 
         # ---- Write Parquet ----
         def write_parquet():
-            fs = s3fs.S3FileSystem()
+            fs = get_s3fs()
             with fs.open(S3_PARQUET_PATH, "wb") as f:
                 df.to_parquet(f, engine="pyarrow", index=False)
 
@@ -175,24 +200,17 @@ def coingecko_crypto_market():
 
         # ---- Write CSV (partitioned) ----
         def write_csv():
-            fs = s3fs.S3FileSystem()
+            fs = get_s3fs()
 
             partition_date = datetime.utcnow().strftime("%Y-%m-%d")
 
             partitioned_path = (
-                "dehlive-sales-811575226032-us-east-1/raw/crypto_market/"
+                f"s3://dehlive-sales-811575226032-us-east-1/raw/crypto_market/"
                 f"date={partition_date}/crypto_market.csv"
             )
 
             with fs.open(partitioned_path, "w") as f:
                 df.to_csv(f, index=False)
-
-        # ---- Write CSV without partitions
-        #def write_csv():
-
-         #   fs = s3fs.S3FileSystem()
-         #   with fs.open(S3_CSV_PATH, "w") as f:
-         #       df.to_csv(f, index=False)
 
         retry(write_csv)
 
