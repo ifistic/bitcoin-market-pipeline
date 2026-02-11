@@ -10,3 +10,6 @@ dagster-postgres
 pandas
 requests
 
+dbt-snowflake
+s3fs
+
