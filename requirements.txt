@@ -9,7 +9,7 @@ dagster-dbt
 dagster-postgres
 pandas
 requests
-
+pyarrow
 dbt-snowflake
 s3fs
 
