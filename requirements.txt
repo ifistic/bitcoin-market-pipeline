@@ -1,5 +1,12 @@
 # dbt core
-dbt-core==1.11.4
+#dbt-core==1.11.4
 
 # dbt Snowflake adapter
 #dbt-snowflake==1.5.1
+dagster
+dagster-cloud
+dagster-dbt
+dagster-postgres
+pandas
+requests
+
