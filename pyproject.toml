@@ -11,3 +11,7 @@ build-backend = "setuptools.build_meta"
 name = "crypto_pipeline"
 version = "0.1.0"
 dependencies = []
+
+[tool.setuptools]
+packages = ["crypto_pipeline"]
+
