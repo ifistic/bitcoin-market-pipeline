@@ -13,9 +13,7 @@ import traceback
 # CONFIG
 # ================================
 
-S3_CSV_PATH = "s3://dehlive-sales-811575226032-us-east-1/raw/crypto_market.csv"
 S3_PARQUET_PATH = "s3://dehlive-sales-811575226032-us-east-1/raw/crypto_market.parquet"
-
 SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:811575226032:mytopic"
 
 DB_CONFIG = {
@@ -35,14 +33,13 @@ EXPECTED_COLUMNS = [
 ]
 
 # ================================
-# AWS CREDENTIALS
+# AWS
 # ================================
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
 
-# Helper to get S3 filesystem with env credentials
 def get_s3fs():
     return s3fs.S3FileSystem(
         key=AWS_ACCESS_KEY_ID,
@@ -59,10 +56,10 @@ def get_boto3_client(service_name):
     )
 
 # ================================
-# DATABASE LOGGER
+# POSTGRES LOGGER
 # ================================
 
-def log_failure(step_name, exc, run_id=None):
+def log_failure(step_name, exc, run_id):
     try:
         tb = traceback.extract_tb(exc.__traceback__)
         last = tb[-1]
@@ -89,8 +86,7 @@ def log_failure(step_name, exc, run_id=None):
         cur.execute("""
         INSERT INTO public.pipeline_logs
         (step_name, status, error_type, error_message,
-         file_name, line_number, function_name,
-         stack_trace, run_id)
+         file_name, line_number, function_name, stack_trace, run_id)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """, (
             step_name,
@@ -108,10 +104,8 @@ def log_failure(step_name, exc, run_id=None):
         cur.close()
         conn.close()
 
-        print(" Logged failure to Postgres")
-
-    except Exception as log_error:
-        print("Failed to log error to DB:", log_error)
+    except Exception as e:
+        print("Failed to log to Postgres:", e)
 
 # ================================
 # SNS
@@ -122,13 +116,13 @@ def send_sns(message):
         client = get_boto3_client("sns")
         client.publish(TopicArn=SNS_TOPIC_ARN, Message=message)
     except Exception as e:
-        print(" SNS failed:", e)
+        print("SNS error:", e)
 
 # ================================
 # RETRY
 # ================================
 
-def retry(func, retries=3, delay=1, backoff=1.5):
+def retry(func, retries=3, delay=1, backoff=2):
     for i in range(retries):
         try:
             return func()
@@ -149,9 +143,9 @@ def coingecko_crypto_market():
     logs = []
 
     try:
-        logs.append(f"Starting {step_name} | Run ID: {run_id}")
+        logs.append(f"Run started: {run_id}")
 
-        # ---- Fetch API ----
+        # ---- Fetch ----
         def fetch():
             r = requests.get(
                 "https://api.coingecko.com/api/v3/coins/markets",
@@ -169,28 +163,21 @@ def coingecko_crypto_market():
             return {k: float(v) if isinstance(v, int) else v for k, v in row.items()}
 
         data = [normalize(x) for x in data]
-
-        # ---- DataFrame ----
         df = pd.DataFrame(data)
 
         # ---- Schema drift ----
         missing = [c for c in EXPECTED_COLUMNS if c not in df.columns]
         extra = [c for c in df.columns if c not in EXPECTED_COLUMNS]
-
         if missing or extra:
-            send_sns(
-                f"Schema drift in {step_name} | Run {run_id}\n"
-                f"Missing: {missing}\nExtra: {extra}"
-            )
+            send_sns(f"Schema drift!\nMissing: {missing}\nExtra: {extra}")
 
         df = df[[c for c in EXPECTED_COLUMNS if c in df.columns]]
 
         # ---- Datetimes ----
-        for col in ["ath_date", "atl_date", "last_updated"]:
-            if col in df.columns:
-                df[col] = pd.to_datetime(df[col], errors="coerce")
+        for c in ["ath_date", "atl_date", "last_updated"]:
+            df[c] = pd.to_datetime(df[c], errors="coerce")
 
-        # ---- Write Parquet ----
+        # ---- Write Parquet (Silver layer) ----
         def write_parquet():
             fs = get_s3fs()
             with fs.open(S3_PARQUET_PATH, "wb") as f:
@@ -198,29 +185,35 @@ def coingecko_crypto_market():
 
         retry(write_parquet)
 
-        # ---- Write CSV (partitioned) ----
+        # ---- Write CSV (Bronze / Time Partitioned) ----
         def write_csv():
             fs = get_s3fs()
+            now = datetime.utcnow()
 
-            partition_date = datetime.utcnow().strftime("%Y-%m-%d")
+            year  = now.strftime("%Y")
+            month = now.strftime("%m")
+            day   = now.strftime("%d")
+            hour  = now.strftime("%H")
+            ts    = now.strftime("%Y%m%d_%H%M%S")
 
-            partitioned_path = (
-                f"s3://dehlive-sales-811575226032-us-east-1/raw/crypto_market/"
-                f"date={partition_date}/crypto_market.csv"
+            base = "s3://dehlive-sales-811575226032-us-east-1/raw/crypto_market"
+
+            path = (
+                f"{base}/year={year}/month={month}/day={day}/hour={hour}/"
+                f"crypto_market_{ts}.csv"
             )
 
-            with fs.open(partitioned_path, "w") as f:
+            with fs.open(path, "w") as f:
                 df.to_csv(f, index=False)
+
+            logs.append(f"CSV written to {path}")
 
         retry(write_csv)
 
-        logs.append(" Files written to S3")
-
         send_sns("SUCCESS\n" + "\n".join(logs))
-
         return df
 
     except Exception as e:
         log_failure(step_name, e, run_id)
-        send_sns(f" FAILURE in {step_name} | Run {run_id}\n{e}")
+        send_sns(f"FAILURE in {step_name}\nRun: {run_id}\n{e}")
         raise
