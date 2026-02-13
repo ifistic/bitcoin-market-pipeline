@@ -4,7 +4,7 @@ from crypto_pipeline.jobs import crypto_market_job
 
 # Example: run every day at 6:00 UTC
 @schedule(
-    cron_schedule="0 6-23/6 * * *", # every 6 hours
+    cron_schedule="0 6 * * *", # every 6 hours
     # " 0 6 * * *",  # minute hour day month day_of_week( every 6 pm or am )
     job=crypto_market_job,
     execution_timezone="UTC"
