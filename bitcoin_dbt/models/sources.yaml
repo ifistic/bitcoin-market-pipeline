@@ -1,0 +1,29 @@
+version: 2
+
+sources:
+  - name: crypto
+    description: "Schema and freshness testing for raw crypto data"
+
+    database: CRYPTO_DB
+    schema: RAW
+
+    freshness:
+      warn_after:
+        count: 1
+        period: hour
+      error_after:
+        count: 6
+        period: hour
+
+    loaded_at_field: last_updated
+
+    tables:
+      - name: CRYPTO_MARKET_RAW
+        description: "Raw CoinGecko crypto market data"
+
+        columns:
+          - name: id
+            description: "The primary key for this table"
+            tests:
+              - not_null
+              - unique
