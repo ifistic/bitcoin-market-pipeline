@@ -1,19 +1,18 @@
 # Core Dagster packages
-dagster
+dagster==1.12.14
+dagster-dbt==0.28.13
 dagster-cloud
-
-# Dagster DBT integration (latest compatible with Python 3.10)
-dagster-dbt 
-
-# Databases / adapters
 dagster-postgres
+
+# DBT and database
 dbt-core==1.5.2
 dbt-snowflake==1.5.1
 
-# Data / storage
+# Data & cloud utilities
 pandas
-requests
 pyarrow
+requests
 s3fs
-boto3
 sqlalchemy
+boto3
+
