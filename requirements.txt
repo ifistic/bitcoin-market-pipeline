@@ -2,7 +2,8 @@
 dagster==1.12.13
 dagster-dbt==0.28.13
 dagster-cloud==1.12.1
-dagster-postgres==1.12.13
+dagster-postgres 0.28.14
+
 
 # Data & cloud utilities
 pandas==2.1.1
