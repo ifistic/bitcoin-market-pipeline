@@ -1,19 +1,19 @@
-# Core Dagster packages
-dagster==1.12.13
+# Dagster core
+dagster==1.12.14
 dagster-dbt==0.28.13
-dagster-cloud
-dagster-postgres
 
-# DBT and database
-dbt-core==1.5.2
-dbt-snowflake==1.5.1
+# DBT (compatible with dagster-dbt 0.28.13)
+dbt-core==1.11.1
+dbt-snowflake==1.11.1
 
-# Data & cloud utilities
+# Python data libraries
 pandas
 pyarrow
 requests
 s3fs
 sqlalchemy
-boto3
+
+# Optional, but often useful for dbt logging / CLI
+python-dotenv
 
 
