@@ -42,6 +42,10 @@ jobs:
           ref: ${{ github.head_ref }}
           path: project-repo
 
+      - name: Clear PEX Cache
+        if: steps.prerun.outputs.result == 'pex-deploy'
+        run: rm -rf ~/.cache/pex
+
       - name: Python Executable Deploy
         if: steps.prerun.outputs.result == 'pex-deploy'
         uses: dagster-io/dagster-cloud-action/actions/build_deploy_python_executable@v1.12.14
