@@ -19,5 +19,6 @@ sqlalchemy
 dagster-dbt>=1.0.0
 dagster==2.9.0
 dagster-dbt==1.2.0  # or the latest compatible version
+dbt-core==1.5.2
 
 
