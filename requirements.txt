@@ -1,7 +1,6 @@
-rm -rf ~/.cache/pex
 
 # Core Dagster packages
-dagster==1.12.14
+dagster==1.12.13
 dagster-dbt==0.28.13
 dagster-cloud
 dagster-postgres
