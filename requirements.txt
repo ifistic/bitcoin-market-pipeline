@@ -1,18 +1,13 @@
-
 # Core Dagster packages
 dagster==1.12.13
 dagster-dbt==0.28.13
-dagster-cloud
-dagster-postgres
-
-# DBT and database
-dbt-core==1.5.2
-dbt-snowflake==1.5.1
+dagster-cloud==1.12.14
+dagster-postgres==1.12.13
 
 # Data & cloud utilities
-pandas
-pyarrow
-requests
-s3fs
-sqlalchemy
-boto3
+pandas==2.1.1
+pyarrow==12.0.1
+requests==2.31.0
+s3fs==2023.12.0
+sqlalchemy==2.0.22
+boto3==1.28.52
