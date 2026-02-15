@@ -12,10 +12,9 @@ defs = Definitions(
     jobs=[crypto_market_job],
     schedules=[daily_crypto_market_schedule],
 )
-dbt_resource = dbt_cli_resource.configured(
-    {
-        "project_dir": "./bitcoin_dbt",  # path to my dbt project
-        "profiles_dir": "~/.dbt",       # path to my profiles.yml
-    }
-)
+dbt = dbt_cli_resource_v2.configured({
+    "project_dir": "/home/ifi/bitcoin_market/bitcoin_dbt",
+    "profiles_dir": "/home/ifi/.dbt"
+})
+
 
