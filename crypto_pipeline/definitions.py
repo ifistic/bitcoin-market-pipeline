@@ -4,6 +4,7 @@ from .assets import coingecko_crypto_market
 from .jobs import crypto_market_job
 from .schedules import daily_crypto_market_schedule
 from dagster_dbt import dbt_cli_resource_v2
+from .resources import dbt_resource
 
 from .dbt_assets import dbt_assets
 
