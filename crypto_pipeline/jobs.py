@@ -2,7 +2,7 @@
 from dagster import job
 from crypto_pipeline.assets import coingecko_crypto_market
 from dagster import job, op
-from dagster_dbt import dbt_run_opn
+from dagster_dbt import dbt_run_op
 
 from .resources import dbt_resource
 
