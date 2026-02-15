@@ -1,9 +1,9 @@
 # Core Dagster packages
-dagster==2.9.0
+dagster
 dagster-cloud
 
 # Dagster DBT integration (latest compatible with Python 3.10)
-dagster-dbt==0.28.13  
+dagster-dbt 
 
 # Databases / adapters
 dagster-postgres
