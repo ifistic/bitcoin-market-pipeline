@@ -2,18 +2,24 @@
 dagster==1.12.14
 dagster-dbt==0.28.13
 
-# DBT (compatible with dagster-dbt 0.28.13)
+# DBT core & adapter
 dbt-core==1.11.1
 dbt-snowflake==1.11.1
 
-# Python data libraries
-pandas
-pyarrow
-requests
-s3fs
-sqlalchemy
+# Data & utilities
+pandas==2.1.1
+pyarrow==12.0.1
+python-dotenv==1.0.0
+requests==2.31.0
+s3fs==2023.12.0
+sqlalchemy==2.0.21
 
-# Optional, but often useful for dbt logging / CLI
-python-dotenv
+# Packaging tools (pin for PEX compatibility)
+pip==23.2.1
+setuptools==67.8.1
+wheel==0.40.0
+packaging==21.3
+pyparsing==3.0.8
+
 
 
