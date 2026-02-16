@@ -3,10 +3,9 @@ locations:
     code_source:
       package_name: crypto_pipeline
     build:
-      python_version: "3.10"
-      # Install git as a system dependency
-      setup_commands:
-        - apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+      directory: .
+      # Specify the base image if using Docker deployment
+      registry: docker.io/ifistic/bitcoin-market-pipeline
     container_context:
       env_vars:
         - GIT_PYTHON_REFRESH=quiet
