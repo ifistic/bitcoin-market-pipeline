@@ -51,6 +51,10 @@ jobs:
           python_version: "${{ env.PYTHON_VERSION }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Add this to ensure pandas/numpy wheels match Dagster Cloud runtime (Amazon Linux 2)
+          PEX_PLATFORM: manylinux2014_x86_64-cp-310-cp310
+          # Optional: force fresh PEX cache to avoid old Ubuntu 22 wheels
+          # PEX_CLEAR_CACHE: '1'
 
   dagster_cloud_docker_deploy:
     name: Docker Deploy
@@ -72,8 +76,6 @@ jobs:
           dagster_cloud_api_token: ${{ secrets.DAGSTER_CLOUD_API_TOKEN }}
           location: ${{ toJson(matrix.location) }}
           base_image: "python:${{ env.PYTHON_VERSION }}-slim"
-          # Uncomment to pass through Github Action secrets as a JSON string of key-value pairs
-          # env_vars: ${{ toJson(secrets) }}
           organization_id: ${{ secrets.ORGANIZATION_ID }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
