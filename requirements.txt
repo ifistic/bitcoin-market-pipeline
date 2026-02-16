@@ -8,7 +8,7 @@ dagster-dbt==0.28.1
 #dagster==1.12.14
 #dagster-cloud==1.12.14
 # dagster-dbt==0.28.1       # if compatible
-dagster-snowflake==0.20.1
+# dagster-snowflake==0.20.1
  
 
 # Data & cloud utilities
