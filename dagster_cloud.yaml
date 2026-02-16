@@ -1,5 +1,6 @@
 locations:
   - location_name: bitcoin_market
+
     code_source:
       package_name: crypto_pipeline
 
@@ -8,8 +9,7 @@ locations:
         container_kwargs:
           image: ifistic/bitcoin-market-pipeline:latest
         env_vars:
-          - "GIT_PYTHON_REFRESH=quiet"
-
+          - GIT_PYTHON_REFRESH=quiet
 
 
    
