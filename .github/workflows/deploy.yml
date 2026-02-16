@@ -1,4 +1,5 @@
 name: Serverless Prod Deployment
+
 on:
   push:
     branches:
@@ -9,6 +10,7 @@ concurrency:
   # Cancel in-progress deploys to same branch
   group: ${{ github.ref }}/deploy
   cancel-in-progress: true
+
 env:
   DAGSTER_CLOUD_URL: "http://ubokobong2.dagster.plus"
   DAGSTER_CLOUD_API_TOKEN: ${{ secrets.DAGSTER_CLOUD_API_TOKEN }}
@@ -24,10 +26,20 @@ jobs:
       build_info: ${{ steps.parse-workspace.outputs.build_info }}
 
     steps:
+      # Step 1: Checkout code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Install Git (fixes GitPython errors)
+      - name: Install Git
+        run: sudo apt-get update && sudo apt-get install -y git
+
+      # Step 3: Prerun Checks
       - name: Prerun Checks
         id: prerun
         uses: dagster-io/dagster-cloud-action/actions/utils/prerun@v1.12.14
 
+      # Step 4: Parse workspace for Docker deployment
       - name: Launch Docker Deploy
         if: steps.prerun.outputs.result == 'docker-deploy'
         id: parse-workspace
@@ -35,6 +47,7 @@ jobs:
         with:
           dagster_cloud_file: $DAGSTER_CLOUD_FILE
 
+      # Step 5: Checkout code again for PEX deploy
       - name: Checkout for Python Executable Deploy
         if: steps.prerun.outputs.result == 'pex-deploy'
         uses: actions/checkout@v4
@@ -42,6 +55,7 @@ jobs:
           ref: ${{ github.head_ref }}
           path: project-repo
 
+      # Step 6: Python Executable Deploy
       - name: Python Executable Deploy
         if: steps.prerun.outputs.result == 'pex-deploy'
         uses: dagster-io/dagster-cloud-action/actions/build_deploy_python_executable@v1.12.14
@@ -51,6 +65,7 @@ jobs:
           python_version: "${{ env.PYTHON_VERSION }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_PYTHON_GIT_EXECUTABLE: "/usr/bin/git"  # explicitly sets git for GitPython
 
   dagster_cloud_docker_deploy:
     name: Docker Deploy
@@ -61,19 +76,19 @@ jobs:
       fail-fast: false
       matrix:
         location: ${{ fromJSON(needs.dagster_cloud_default_deploy.outputs.build_info) }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
+
       - name: Build and deploy to Dagster Cloud serverless
         uses: dagster-io/dagster-cloud-action/actions/serverless_prod_deploy@v1.12.14
         with:
           dagster_cloud_api_token: ${{ secrets.DAGSTER_CLOUD_API_TOKEN }}
           location: ${{ toJson(matrix.location) }}
           base_image: "python:${{ env.PYTHON_VERSION }}-slim"
-          # Uncomment to pass through Github Action secrets as a JSON string of key-value pairs
-          # env_vars: ${{ toJson(secrets) }}
           organization_id: ${{ secrets.ORGANIZATION_ID }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
