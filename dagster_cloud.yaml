@@ -2,14 +2,10 @@ locations:
   - location_name: crypto_pipeline
     code_source:
       package_name: crypto_pipeline
-    build:
-      directory: .
-      # Specify the base image if using Docker deployment
-      registry: docker.io/ifistic/bitcoin-market-pipeline
     container_context:
-      env_vars:
-        - GIT_PYTHON_REFRESH=quiet
-        - GIT_PYTHON_GIT_EXECUTABLE=/usr/bin/git
-
+      docker:
+        env_vars:
+          - GIT_PYTHON_REFRESH=quiet
+          - GIT_PYTHON_GIT_EXECUTABLE=/usr/bin/git
 
    
