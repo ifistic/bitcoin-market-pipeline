@@ -2,13 +2,14 @@ locations:
   - location_name: bitcoin_market
     code_source:
       package_name: crypto_pipeline
-      working_directory: .
+
     container_context:
       docker:
         container_kwargs:
-          image: python:3.10  # full Python includes git
+          image: python:3.10-slim
         env_vars:
           - "PATH=/usr/bin:$PATH"
+
     k8s:
       env_vars:
         - DAGSTER_CLOUD_DEPLOYMENT_NAME=prod
@@ -20,4 +21,3 @@ locations:
         - SNOWFLAKE_DATABASE
         - SNOWFLAKE_SCHEMA
         - SNOWFLAKE_ROLE
-
