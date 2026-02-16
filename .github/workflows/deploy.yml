@@ -1,61 +1,79 @@
 name: Serverless Prod Deployment
-
 on:
   push:
     branches:
-      - main
+      - "main"
+      - "master"
+
+concurrency:
+  # Cancel in-progress deploys to same branch
+  group: ${{ github.ref }}/deploy
+  cancel-in-progress: true
+env:
+  DAGSTER_CLOUD_URL: "http://ubokobong.eu.dagster.plus"
+  DAGSTER_CLOUD_API_TOKEN: ${{ secrets.DAGSTER_CLOUD_API_TOKEN }}
+  ENABLE_FAST_DEPLOYS: 'true'
+  PYTHON_VERSION: '3.10'
+  DAGSTER_CLOUD_FILE: 'dagster_cloud.yaml'
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    env:
-      PYTHON_VERSION: 3.10
-      GIT_PYTHON_GIT_EXECUTABLE: /usr/bin/git
-      GIT_PYTHON_REFRESH: quiet
-      PEX_ROOT: ${{ runner.temp }}/pex
-      DAGSTER_CLOUD_API_TOKEN: ${{ secrets.DAGSTER_CLOUD_API_TOKEN }}
-      DAGSTER_CLOUD_URL: https://your-dagster-cloud-url
+  dagster_cloud_default_deploy:
+    name: Dagster Serverless Deploy
+    runs-on: ubuntu-22.04
+    outputs:
+      build_info: ${{ steps.parse-workspace.outputs.build_info }}
 
     steps:
-      # Checkout code
-      - uses: actions/checkout@v3
+      - name: Prerun Checks
+        id: prerun
+        uses: dagster-io/dagster-cloud-action/actions/utils/prerun@v1.12.14
 
-      # Install Python
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - name: Launch Docker Deploy
+        if: steps.prerun.outputs.result == 'docker-deploy'
+        id: parse-workspace
+        uses: dagster-io/dagster-cloud-action/actions/utils/parse_workspace@v1.12.14
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          dagster_cloud_file: $DAGSTER_CLOUD_FILE
 
-      # Ensure git is on PATH
-      - name: Add git to PATH
-        run: echo "/usr/bin" >> $GITHUB_PATH
+      - name: Checkout for Python Executable Deploy
+        if: steps.prerun.outputs.result == 'pex-deploy'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          path: project-repo
 
-      # Install PEX
-      - name: Install PEX
-        run: pip install --upgrade pip pex
+      - name: Python Executable Deploy
+        if: steps.prerun.outputs.result == 'pex-deploy'
+        uses: dagster-io/dagster-cloud-action/actions/build_deploy_python_executable@v1.12.14
+        with:
+          dagster_cloud_file: "$GITHUB_WORKSPACE/project-repo/$DAGSTER_CLOUD_FILE"
+          build_output_dir: "$GITHUB_WORKSPACE/build"
+          python_version: "${{ env.PYTHON_VERSION }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Install Dagster + DBT compatible versions into a local wheel cache
-      - name: Pre-download dependencies
-        run: |
-          pip download --dest ${{ runner.temp }}/deps_cache \
-            dagster==1.12.14 \
-            dagster-dbt==0.28.14 \
-            dagster-snowflake==0.28.14 \
-            dbt-core==1.6.0 \
-            --no-binary :all: \
-            --no-deps
-
-      # Build the PEX in isolated mode
-      - name: Build Python Executable (PEX)
-        run: |
-          pex . \
-              -r requirements.txt \
-              -o dagster-cloud.pex \
-              --python-shebang="/usr/bin/env python3" \
-              --disable-cache \
-              --find-links ${{ runner.temp }}/deps_cache \
-              --isolated
-
-      # Deploy the PEX to Dagster Cloud
-      - name: Deploy PEX
-        run: ./dagster-cloud.pex deploy --deployment prod
+  dagster_cloud_docker_deploy:
+    name: Docker Deploy
+    runs-on: ubuntu-22.04
+    if: needs.dagster_cloud_default_deploy.outputs.build_info
+    needs: dagster_cloud_default_deploy
+    strategy:
+      fail-fast: false
+      matrix:
+        location: ${{ fromJSON(needs.dagster_cloud_default_deploy.outputs.build_info) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Build and deploy to Dagster Cloud serverless
+        uses: dagster-io/dagster-cloud-action/actions/serverless_prod_deploy@v1.12.14
+        with:
+          dagster_cloud_api_token: ${{ secrets.DAGSTER_CLOUD_API_TOKEN }}
+          location: ${{ toJson(matrix.location) }}
+          base_image: "python:${{ env.PYTHON_VERSION }}-slim"
+          # Uncomment to pass through Github Action secrets as a JSON string of key-value pairs
+          # env_vars: ${{ toJson(secrets) }}
+          organization_id: ${{ secrets.ORGANIZATION_ID }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
