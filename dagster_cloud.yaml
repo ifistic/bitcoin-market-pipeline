@@ -6,7 +6,7 @@ locations:
     container_context:
       docker:
         container_kwargs:
-          image: python:3.10  # full image includes git
+          image: python:3.10  # full Python includes git
         env_vars:
           - "PATH=/usr/bin:$PATH"
     k8s:
@@ -20,3 +20,4 @@ locations:
         - SNOWFLAKE_DATABASE
         - SNOWFLAKE_SCHEMA
         - SNOWFLAKE_ROLE
+
