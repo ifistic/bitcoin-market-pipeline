@@ -2,9 +2,11 @@
 dagster==1.12.1
 dagster-cloud==1.12.1
 dagster-dbt==0.28.1
-dagster-snowflake==0.28.12
+# dagster-snowflake==0.28.12
 
-
+dagster-snowflake==0.28.14
+snowflake-connector-python>=3.0.0,<4.0.0
+snowflake-sqlalchemy>=1.4.0,<2.0.0  
 
 # Data & cloud utilities
 pyarrow==12.0.1
