@@ -27,6 +27,10 @@ jobs:
       - name: Prerun Checks
         id: prerun
         uses: dagster-io/dagster-cloud-action/actions/utils/prerun@v1.12.14
+      - name: Install git
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git
 
       - name: Launch Docker Deploy
         if: steps.prerun.outputs.result == 'docker-deploy'
