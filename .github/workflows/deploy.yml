@@ -1,22 +1,20 @@
 name: Serverless Prod Deployment
-
 on:
   push:
     branches:
       - "main"
       - "master"
-
 concurrency:
   group: ${{ github.ref }}/deploy
   cancel-in-progress: true
-
 env:
   DAGSTER_CLOUD_URL: "http://ubokobong2.dagster.plus"
   DAGSTER_CLOUD_API_TOKEN: ${{ secrets.DAGSTER_CLOUD_API_TOKEN }}
   ENABLE_FAST_DEPLOYS: 'true'
   PYTHON_VERSION: '3.10'
   DAGSTER_CLOUD_FILE: 'dagster_cloud.yaml'
-  GIT_PYTHON_REFRESH: quiet  # silences GitPython warnings
+  GIT_PYTHON_REFRESH: quiet
+  GIT_PYTHON_GIT_EXECUTABLE: /usr/bin/git  # Set globally instead of per-step
 
 jobs:
   dagster_cloud_default_deploy:
@@ -24,29 +22,30 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       build_info: ${{ steps.parse-workspace.outputs.build_info }}
-
     steps:
       # Step 1: Checkout code
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      # Step 2: Install Git (fixes GitPython errors)
-      - name: Install Git
-        run: sudo apt-get update && sudo apt-get install -y git
-
+      
+      # Step 2: Verify Git is available (ubuntu-22.04 has it pre-installed)
+      - name: Verify Git Installation
+        run: |
+          git --version
+          which git
+      
       # Step 3: Prerun Checks
       - name: Prerun Checks
         id: prerun
         uses: dagster-io/dagster-cloud-action/actions/utils/prerun@v1.12.14
-
+      
       # Step 4: Parse workspace for Docker deployment
       - name: Launch Docker Deploy
         if: steps.prerun.outputs.result == 'docker-deploy'
         id: parse-workspace
         uses: dagster-io/dagster-cloud-action/actions/utils/parse_workspace@v1.12.14
         with:
-          dagster_cloud_file: $DAGSTER_CLOUD_FILE
-
+          dagster_cloud_file: ${{ env.DAGSTER_CLOUD_FILE }}
+      
       # Step 5: Checkout code again for PEX deploy
       - name: Checkout for Python Executable Deploy
         if: steps.prerun.outputs.result == 'pex-deploy'
@@ -54,18 +53,17 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           path: project-repo
-
+      
       # Step 6: Python Executable Deploy
       - name: Python Executable Deploy
         if: steps.prerun.outputs.result == 'pex-deploy'
         uses: dagster-io/dagster-cloud-action/actions/build_deploy_python_executable@v1.12.14
         with:
-          dagster_cloud_file: "$GITHUB_WORKSPACE/project-repo/$DAGSTER_CLOUD_FILE"
-          build_output_dir: "$GITHUB_WORKSPACE/build"
+          dagster_cloud_file: "${{ github.workspace }}/project-repo/${{ env.DAGSTER_CLOUD_FILE }}"
+          build_output_dir: "${{ github.workspace }}/build"
           python_version: "${{ env.PYTHON_VERSION }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_PYTHON_GIT_EXECUTABLE: "/usr/bin/git"  # explicitly sets git for GitPython
 
   dagster_cloud_docker_deploy:
     name: Docker Deploy
@@ -76,13 +74,12 @@ jobs:
       fail-fast: false
       matrix:
         location: ${{ fromJSON(needs.dagster_cloud_default_deploy.outputs.build_info) }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
-
+      
       - name: Build and deploy to Dagster Cloud serverless
         uses: dagster-io/dagster-cloud-action/actions/serverless_prod_deploy@v1.12.14
         with:
