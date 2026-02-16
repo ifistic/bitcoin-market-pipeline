@@ -1,15 +1,16 @@
 locations:
-  - location_name: bitcoin_market
-
+  - location_name: crypto_pipeline
     code_source:
       package_name: crypto_pipeline
-
+    build:
+      python_version: "3.10"
+      # Install git as a system dependency
+      setup_commands:
+        - apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
     container_context:
-      docker:
-        container_kwargs:
-          image: ifistic/bitcoin-market-pipeline:latest
-        env_vars:
-          - GIT_PYTHON_REFRESH=quiet
+      env_vars:
+        - GIT_PYTHON_REFRESH=quiet
+        - GIT_PYTHON_GIT_EXECUTABLE=/usr/bin/git
 
 
    
