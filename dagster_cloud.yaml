@@ -5,9 +5,11 @@ locations:
 
     container_context:
       docker:
-        image: python:3.10-slim-buster   # use slim-buster or your own custom image
+        container_kwargs:
+          image: ifistic/bitcoin-market-pipeline:latest  # your prebuilt Docker image
         env_vars:
           - "GIT_PYTHON_REFRESH=quiet"
+
 
 
    
