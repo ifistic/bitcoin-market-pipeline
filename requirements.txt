@@ -6,7 +6,7 @@
 dagster-dbt==0.28.14
 dagster==1.12.14
 dagster-cloud==1.12.14
-dagster-dbt==0.28.1       # if compatible
+# dagster-dbt==0.28.1       # if compatible
 dagster-snowflake==0.28.14
  
 
