@@ -21,23 +21,22 @@ jobs:
     name: Docker Deploy
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.ref }}
 
-      - name: Build and deploy to Dagster Cloud serverless
+      - name: Parse Workspace
+        id: parse-workspace
+        uses: dagster-io/dagster-cloud-action/actions/utils/parse_workspace@v1.12.14
+        with:
+          dagster_cloud_file: ${{ env.DAGSTER_CLOUD_FILE }}
+
+      - name: Build and Deploy to Dagster Cloud
         uses: dagster-io/dagster-cloud-action/actions/serverless_prod_deploy@v1.12.14
         with:
           dagster_cloud_api_token: ${{ secrets.DAGSTER_CLOUD_API_TOKEN }}
-          location:
-                location_name: bitcoin_market
-            code_source:
-              package_name: crypto_pipeline
-            container_context:
-              docker:
-                container_kwargs:
-                  image: ifistic/bitcoin-market-pipeline:latest
+          location: ${{ toJson(steps.parse-workspace.outputs.build_info) }}
           base_image: "python:${{ env.PYTHON_VERSION }}-slim"
           organization_id: ${{ secrets.ORGANIZATION_ID }}
         env:
