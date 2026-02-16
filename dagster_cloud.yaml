@@ -1,4 +1,9 @@
 locations:
-- code_source:
-    module_name: crypto_pipeline.definitions
-  location_name: crypto_pipeline
+  - location_name: crypto_pipeline
+    code_source:
+      python_package:
+        package_name: crypto_pipeline
+
+    env_vars:
+      GIT_PYTHON_GIT_EXECUTABLE: /usr/bin/git
+      GIT_PYTHON_REFRESH: quiet
