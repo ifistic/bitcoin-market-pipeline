@@ -2,7 +2,7 @@ locations:
   - location_name: bitcoin_market
 
     code_source:
-      package_name: bitcoin_market
+      package_name: crypto_pipeline
 
     container_context:
       k8s:
