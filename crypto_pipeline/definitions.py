@@ -1,6 +1,6 @@
 # crypto_pipeline/definitions.py
 from dagster import Definitions
-from dagster_dbt import dbt_cli_resource
+from dagster_dbt import DbtCliResource
 
 from .assets import coingecko_crypto_market
 from .dbt_assets import *  # include all dbt asset defs if needed
