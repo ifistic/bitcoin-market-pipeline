@@ -6,7 +6,7 @@ locations:
     container_context:
       docker:
         container_kwargs:
-          image: python:3.10-slim
+          image: python:3.10
         env_vars:
           - "PATH=/usr/bin:$PATH"
 
