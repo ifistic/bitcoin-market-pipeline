@@ -8,13 +8,11 @@ locations:
       docker:
         base_image: python:3.10-slim
         container_kwargs:
-          # Install git in the container
-          build_args:
-            - "GIT_PACKAGES=git"
           env_vars:
             - "PATH=/usr/bin:$PATH"
         container_commands:
           - "apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*"
+
       k8s:
         env_vars:
           - DAGSTER_CLOUD_DEPLOYMENT_NAME=prod
@@ -26,3 +24,19 @@ locations:
           - SNOWFLAKE_DATABASE
           - SNOWFLAKE_SCHEMA
           - SNOWFLAKE_ROLE
+
+    # Optional: configure Python executable / PEX deployment metadata
+    pex_metadata:
+      python_version: "3.10"
+      pex_tag: "bitcoin_market_pex"
+
+    # Optional: working directory inside container
+    working_directory: "/home/dagster/bitcoin_market"
+
+    # Optional: resources for Dagster
+    resources:
+      dbt: 
+        type: dbt_cli_resource_v2
+        config:
+          project_dir: "/home/dagster/bitcoin_market/bitcoin_dbt"
+          profiles_dir: "/home/dagster/.dbt"
