@@ -1,5 +1,5 @@
 # Core Dagster packages
-dagster==1.12.13
+#dagster==1.12.13
 dagster-dbt==0.28.13
 dagster-cloud==1.12.1
 
