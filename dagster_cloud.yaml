@@ -1,18 +1,18 @@
-location_name: bitcoin_market
+locations:
+  - location_name: bitcoin_market
 
-code_source:
-  package_name: bitcoin_market
+    code_source:
+      package_name: bitcoin_market
 
-container_context:
-  k8s:
-    env_vars:
-      - DAGSTER_CLOUD_DEPLOYMENT_NAME=prod
-      - DAGSTER_CLOUD_LOCATION_NAME=bitcoin_market
-      - SNOWFLAKE_ACCOUNT
-      - SNOWFLAKE_USER
-      - SNOWFLAKE_PASSWORD
-      - SNOWFLAKE_WAREHOUSE
-      - SNOWFLAKE_DATABASE
-      - SNOWFLAKE_SCHEMA
-      - SNOWFLAKE_ROLE
-
+    container_context:
+      k8s:
+        env_vars:
+          - DAGSTER_CLOUD_DEPLOYMENT_NAME=prod
+          - DAGSTER_CLOUD_LOCATION_NAME=bitcoin_market
+          - SNOWFLAKE_ACCOUNT
+          - SNOWFLAKE_USER
+          - SNOWFLAKE_PASSWORD
+          - SNOWFLAKE_WAREHOUSE
+          - SNOWFLAKE_DATABASE
+          - SNOWFLAKE_SCHEMA
+          - SNOWFLAKE_ROLE
