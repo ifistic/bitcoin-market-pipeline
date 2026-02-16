@@ -5,9 +5,9 @@ locations:
 
     container_context:
       docker:
-        container_kwargs:
-          image: python:3.10
+        image: python:3.10-slim-buster   # use slim-buster or your own custom image
         env_vars:
-          - "PATH=/usr/bin:$PATH"
+          - "GIT_PYTHON_REFRESH=quiet"
+
 
    
