@@ -5,6 +5,16 @@ locations:
       package_name: crypto_pipeline
 
     container_context:
+      docker:
+        base_image: python:3.10-slim
+        container_kwargs:
+          # Install git in the container
+          build_args:
+            - "GIT_PACKAGES=git"
+          env_vars:
+            - "PATH=/usr/bin:$PATH"
+        container_commands:
+          - "apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*"
       k8s:
         env_vars:
           - DAGSTER_CLOUD_DEPLOYMENT_NAME=prod
