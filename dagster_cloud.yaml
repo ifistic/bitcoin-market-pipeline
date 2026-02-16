@@ -5,10 +5,10 @@ locations:
 
     container_context:
       docker:
-        container_kwargs:
-          image: ifistic/bitcoin-market-pipeline:latest  # your prebuilt Docker image
+        container_kwargs: {}   # empty → standard Python base image
         env_vars:
           - "GIT_PYTHON_REFRESH=quiet"
+
 
 
 
