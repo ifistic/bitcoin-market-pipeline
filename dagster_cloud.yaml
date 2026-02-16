@@ -1,37 +1,22 @@
 locations:
   - location_name: bitcoin_market
-
-    code_source:
-      package_name: crypto_pipeline
-
-    container_context:
-      docker:
-        container_kwargs:
-          image: python:3.10
-        env_vars:
-          - "PATH=/usr/bin:$PATH"
-      locations:
-  - location_name: crypto_pipeline
     code_source:
       package_name: crypto_pipeline
       working_directory: .
-    build:
-      directory: .
-
-      k8s:
+    container_context:
+      docker:
+        container_kwargs:
+          image: python:3.10   # full image includes git
         env_vars:
-          - DAGSTER_CLOUD_DEPLOYMENT_NAME=prod
-          - DAGSTER_CLOUD_LOCATION_NAME=bitcoin_market
-          - SNOWFLAKE_ACCOUNT
-          - SNOWFLAKE_USER
-          - SNOWFLAKE_PASSWORD
-          - SNOWFLAKE_WAREHOUSE
-          - SNOWFLAKE_DATABASE
-          - SNOWFLAKE_SCHEMA
-          - SNOWFLAKE_ROLE
-
-    pex_metadata:
-      python_version: "3.10"
-      pex_tag: "bitcoin_market_pex"
-
-    working_directory: "/home/dagster/bitcoin_market"
+          - "PATH=/usr/bin:$PATH"
+    k8s:
+      env_vars:
+        - DAGSTER_CLOUD_DEPLOYMENT_NAME=prod
+        - DAGSTER_CLOUD_LOCATION_NAME=bitcoin_market
+        - SNOWFLAKE_ACCOUNT
+        - SNOWFLAKE_USER
+        - SNOWFLAKE_PASSWORD
+        - SNOWFLAKE_WAREHOUSE
+        - SNOWFLAKE_DATABASE
+        - SNOWFLAKE_SCHEMA
+        - SNOWFLAKE_ROLE
