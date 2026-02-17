@@ -3,7 +3,8 @@ from .assets import coingecko_crypto_market
 from .jobs import crypto_market_job
 from .schedules import daily_crypto_market_schedule
 
-# Definitions without dbt for now
+# Force rebuild - removed dbt
+
 defs = Definitions(
     assets=[coingecko_crypto_market],
     jobs=[crypto_market_job],
