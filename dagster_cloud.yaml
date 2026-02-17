@@ -1,8 +1,15 @@
 locations:
   - location_name: crypto_pipeline
-    image: ifistic/bitcoin-market-pipeline:latest
     code_source:
       package_name: crypto_pipeline
+
+    container_context:
+      docker:
+        apt_packages:
+          - git
+        env_vars:
+          - GIT_PYTHON_REFRESH=quiet
+
 
 
 
