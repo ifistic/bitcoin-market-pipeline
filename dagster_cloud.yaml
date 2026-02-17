@@ -1,12 +1,8 @@
 locations:
   - location_name: crypto_pipeline
-  ``image: ifistic/bitcoin-market-pipeline:latest
+    image: ifistic/bitcoin-market-pipeline:latest
     code_source:
       package_name: crypto_pipeline
-    container_context:
-      docker:
-        env_vars:
-          - GIT_PYTHON_REFRESH=quiet
-          - GIT_PYTHON_GIT_EXECUTABLE=/usr/bin/git
+
 
 
