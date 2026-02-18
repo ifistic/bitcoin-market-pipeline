@@ -5,10 +5,8 @@ locations:
 
     container_context:
       docker:
-        apt_packages:
-          - git
-        env_vars:
-          - GIT_PYTHON_REFRESH=quiet
+         env_vars:
+      - DAGSTER_HOME
 
 
 
