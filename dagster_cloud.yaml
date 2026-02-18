@@ -7,7 +7,9 @@ locations:
       docker:
          env_vars:
             - DAGSTER_HOME
+            - GIT_PYTHON_REFRESH=quiet
             - GIT_PYTHON_GIT_EXECUTABLE=/bin/false
+            
 
 
 
