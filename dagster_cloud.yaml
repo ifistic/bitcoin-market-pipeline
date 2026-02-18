@@ -6,7 +6,7 @@ locations:
     container_context:
       docker:
          env_vars:
-      - DAGSTER_HOME
+            - DAGSTER_HOME
 
 
 
