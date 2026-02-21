@@ -1,13 +1,17 @@
-from dagster_dbt import dbt_assets, DbtCliResource
+from pathlib import Path
+
 from dagster import AssetExecutionContext
+from dagster_dbt import DbtCliResource, dbt_assets
 
-DBT_PROJECT_DIR = "bitcoin_dbt"
 
-dbt = DbtCliResource(
-    project_dir=DBT_PROJECT_DIR,
-    profiles_dir="~/.dbt",
-)
+DBT_PROJECT_DIR = Path("/app/dbt")
+DBT_MANIFEST_PATH = DBT_PROJECT_DIR / "target" / "manifest.json"
 
-@dbt_assets(manifest=f"{DBT_PROJECT_DIR}/target/manifest.json")
-def bitcoin_dbt_assets(context: AssetExecutionContext, dbt: DbtCliResource):
-    yield from dbt.cli(["build"], context=context).stream()
+
+@dbt_assets(manifest=DBT_MANIFEST_PATH)
+def dbt_crypto_assets(
+    context: AssetExecutionContext,
+    dbt: DbtCliResource,
+):
+    dbt_invocation = dbt.cli(["build"], context=context)
+    yield from dbt_invocation.stream()
