@@ -55,3 +55,25 @@ du-university-chapters-etl/
 ├── requirements.txt      # Project dependencies
 └── readme.md             # Project documentation
 
+---
+
+#  Local Development Setup
+
+## Clone Repository
+
+```bash
+git clone <your_repo_url>
+cd du-university-chapters-etl
+
+### create virtual environmet
+- python3 -m venv .venv_uni
+- source .venv_uni/bin/activate  # Mac/Linux
+
+
+
+
+
+
+
+
+
