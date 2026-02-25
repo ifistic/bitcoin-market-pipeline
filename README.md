@@ -1,9 +1,6 @@
-###bitcoin_chain_ETL with dbt aws snowflake and dagster in Progress
 # DU University Chapters ETL Pipeline  
 ### A Production-Ready Data Engineering Project
-
 ---
-
 ## Project Overview
 
 This project implements a modular and scalable **ETL (Extract, Transform, Load) pipeline** built with **Python** and integrated with **Google Cloud Platform (GCP)** services.
@@ -19,7 +16,6 @@ It follows modern Data Engineering best practices including:
 - Clean and maintainable project structure
 
 ---
-
 #  ETL Architecture
 
 ![ETL Architecture](image/ETL.drawio.png)
@@ -47,7 +43,7 @@ It follows modern Data Engineering best practices including:
 ---
 
 # 📂 Project Structure
-</> 
+```
 du-university-chapters-etl/
 │
 ├── app/                  # Core application (ETL logic)
@@ -55,91 +51,60 @@ du-university-chapters-etl/
 ├── tests/                # Unit & integration tests
 ├── requirements.txt      # Project dependencies
 └── readme.md             # Project documentation
------
-
-
+```
 #  Local Development Setup
 ## Clone Repository
-
-git clone <your_repo_url>
-cd du-university-chapters-etl
+- git clone https://github.com/ifistic/du-university-chapters-etl
+- cd du-university-chapters-etl
 
 ### create virtual environmet
 - python3 -m venv .venv_uni
 - source .venv_uni/bin/activate  # Mac/Linux
-2️⃣ Create Virtual Environment
-python3 -m venv .venv_uni
-source .venv_uni/bin/activate  # Mac/Linux
-
-Windows activation
-.venv_uni\Scripts\activate
+# Create Virtual Environment
+- python3 -m venv .venv_uni
+- source .venv_uni/bin/activate  # Mac/Linux
+-- Windows activation
+- .venv_uni\Scripts\activate
 
 # Install Dependencies
-pip install --upgrade pip
-pip install -r requirements.txt
+- pip install --upgrade pip
+- pip install -r requirements.txt
 
-Google Cloud Authentication
-
+## Google Cloud Authentication
 Before running the project, authenticate with Google Cloud.
-
 Step 1: Enable Required APIs
+- Go to: https://console.cloud.google.com
+- Navigate to: APIs & Services → Library
+- Enable: BigQuery API
 
-Go to:
-
-https://console.cloud.google.com
-
-Navigate to:
-
-APIs & Services → Library
-
-Enable:
-
-BigQuery API
-
-Cloud Logging API
+## Cloud Logging API
 
 Step 2: Create a Service Account
 
-Go to IAM & Admin → Service Accounts
-
-Create a new service account
-
-Assign the following roles:
-
-BigQuery Admin or BigQuery Data Editor
-
-Logs Writer
+- Go to IAM role: Service Accounts
+- Create a new service account
+  -- Assign the following roles:
+  -- BigQuery Admin or BigQuery Data Editor as Logs Writer
 
 Step 3: Download JSON Key
-
-Download the service account key and store it securely.
+- Download the service account key and store it securely.
 
 Step 4: Configure Environment Variables
+-
+- Create a .env file in the project root:
+- GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+- PROJECT_ID=your_project_id
+- BQ_DATASET=du_data
+- BQ_TABLE=raw_university
 
-Create a .env file in the project root:
+### Never commit .env or JSON credentials to version control.
 
-GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
-PROJECT_ID=your_project_id
-DATASET_ID=your_dataset
-TABLE_ID=your_table
+# Testing
+- Run tests from the root directory.
 
-⚠️ Never commit .env or JSON credentials to version control.
-
-Ensure .env is added to .gitignore.
-
-🧪 Testing
-
-Run tests from the root directory.
-
-🔹 Unit Tests
-pytest tests/unit
-
-Unit tests validate individual components such as the extractor logic.
-
-🔹 Integration Tests
-pytest tests/integration
-
-Integration tests validate data quality and pipeline behavior end-to-end.
+# Unit Tests
+- pytest tests/unit
+-- Unit tests validate individual components such as the extractor logic.
 
 # Running the ETL Pipeline
 From the project root:
@@ -150,39 +115,25 @@ From the project root:
 
 # Load processed data into BigQuery
 
-Log execution status
+- view log execution status
 
-🧾 Logging
+### Logging is configured in: app/logging_config.py
 
-Logging is configured in:
+# Technologies Used
 
-app/logging_config.py
+- Python 3.12
 
-Features:
+- Pandas and requests
 
-Structured logging format
+- Pytest
 
-INFO / WARNING / ERROR levels
+- Google Cloud Platform
 
-Centralized logging configuration
+- BigQuery
 
-Production-ready setup
+- python-dotenv
 
-📊 Technologies Used
-
-Python 3.12
-
-Pandas
-
-Pytest
-
-Google Cloud Platform
-
-BigQuery
-
-python-dotenv
-
-🔒 Security Best Practices
+# Best Practices
 
 Use environment variables for secrets
 
@@ -196,9 +147,7 @@ Structured logging enabled
 
 Tests validate data integrity
 
-📈 Future Enhancements
-
-Docker containerization
+# Future Enhancements
 
 GitHub Actions CI/CD
 
