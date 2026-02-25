@@ -1,5 +1,5 @@
 ###bitcoin_chain_ETL with dbt aws snowflake and dagster in Progress
-# 🚀 DU University Chapters ETL Pipeline  
+# DU University Chapters ETL Pipeline  
 ### A Production-Ready Data Engineering Project
 
 ---
@@ -47,4 +47,11 @@ It follows modern Data Engineering best practices including:
 ---
 
 # 📂 Project Structure
+du-university-chapters-etl/
+│
+├── app/                  # Core application (ETL logic)
+├── image/                # Architecture diagrams / documentation assets
+├── tests/                # Unit & integration tests
+├── requirements.txt      # Project dependencies
+└── readme.md             # Project documentation
 
