@@ -34,12 +34,12 @@ def _retry(func, retries=3, delay=1, backoff=2):
 
 def _snowflake_conn():
     return snowflake.connector.connect(
-        account=os.environ["SNOWFLAKE_ACCOUNT"],
+        account=os.environ.get("SNOWFLAKE_ACCOUNT", "HWJYNTS-UI61119"),
         user=os.environ["SNOWFLAKE_USER"],
         password=os.environ["SNOWFLAKE_PASSWORD"],
         database=os.environ["SNOWFLAKE_DATABASE"],
         schema=os.environ["SNOWFLAKE_SCHEMA"],
-        warehouse=os.environ["SNOWFLAKE_WAREHOUSE"],
+        warehouse=os.environ.get("SNOWFLAKE_WAREHOUSE", "compute_wh"),
         role=os.environ["SNOWFLAKE_ROLE"],
     )
 
