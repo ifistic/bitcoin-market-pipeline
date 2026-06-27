@@ -1,168 +1,133 @@
-# DU University Chapters ETL Pipeline  
-### A Production-Ready Data Engineering Project
----
-## Project Overview
+# Bitcoin Market Data Pipeline
 
-This project implements a modular and scalable **ETL (Extract, Transform, Load) pipeline** built with **Python** and integrated with **Google Cloud Platform (GCP)** services.
+A production-grade ELT pipeline that ingests real-time cryptocurrency market data
+from CoinGecko, loads it into Snowflake, and transforms it through a dbt medallion
+architecture (Bronze → Silver → Gold), orchestrated by Dagster.
 
-It follows modern Data Engineering best practices including:
+## Architecture
 
-- Modular ETL architecture
-- Structured logging
-- Environment-based configuration
-- Unit & integration testing
-- Secure service account authentication
-- BigQuery-ready loading layer
-- Clean and maintainable project structure
+CoinGecko API → Dagster → Snowflake RAW → dbt Bronze → dbt Silver → dbt Gold
 
----
-#  ETL Architecture
+## Tech Stack
 
-![ETL Architecture](image/ETL.drawio.png)
+- Python — Ingestion scripting
+- CoinGecko API — Real-time crypto market data
+- Snowflake — Cloud data warehouse
+- dbt — Data transformation (medallion architecture)
+- Dagster — Orchestration and scheduling
 
----
+## Project Structure
 
-## Architecture Flow
+bitcoin-market-pipeline/
+├── bitcoin_dbt/          # dbt project (bronze/silver/gold)
+├── bitcoin_dagster/      # Dagster package
+├── .env                  # Secrets (never committed)
+├── requirements.txt
+└── README.md
 
-### Extract
-- Pull data from Ducks Unlimited University Chapters API System
-- Implemented in: `app/extractor.py`
+## dbt Medallion Architecture
 
-### Transform
-- Clean, validate, and standardize data
-- Implemented in: `app/main.py`
+### Bronze
+- raw_data — view over raw CoinGecko data
+- incremental_raw — incremental load tracking new records
 
-### Load
-- Load processed data into BigQuery
-- Implemented in: `app/loader.py`
+### Silver
+- silver_crypto — deduplicates records, casts timestamps
+- candles — hourly OHLC candles from SCD2 price history
 
-### Logging
-- Centralized structured logging configuration
-- Implemented in: `app/logging_config.py`
+### Gold
+- scd2 — SCD Type 2 incremental price history
+- indicators — 10 and 50 period moving averages
+- mkt_cap — Top 20 coins by market cap
+- trading_signals — BUY/SELL/HOLD signals from MA crossovers
 
----
+## Setup
 
-# 📂 Project Structure
-```
-du-university-chapters-etl/
-│
-├── app/                  # Core application (ETL logic)
-├── image/                # Architecture diagrams / documentation assets
-├── tests/                # Unit & integration tests
-├── requirements.txt      # Project dependencies
-└── readme.md             # Project documentation
-```
-#  Local Development Setup
-## Clone Repository
-- git clone https://github.com/ifistic/du-university-chapters-etl
-- cd du-university-chapters-etl
+1. Clone the repo
+   git clone https://github.com/YOUR_USERNAME/bitcoin-market-pipeline.git
 
-### create virtual environmet
-- python3 -m venv .venv_uni
-- source .venv_uni/bin/activate  # Mac/Linux
-# Create Virtual Environment
-- python3 -m venv .venv_uni
-- source .venv_uni/bin/activate  # Mac/Linux
--- Windows activation
-- .venv_uni\Scripts\activate
+2. Create virtual environment
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
 
-# Install Dependencies
-- pip install --upgrade pip
-- pip install -r requirements.txt
+3. Create .env file with your Snowflake credentials
+   SNOWFLAKE_ACCOUNT=your_account
+   SNOWFLAKE_USER=your_user
+   SNOWFLAKE_PASSWORD=your_password
+   SNOWFLAKE_DATABASE=CRYPTO_DB
+   SNOWFLAKE_SCHEMA=RAW
+   SNOWFLAKE_WAREHOUSE=CRYPTO_WH
+   SNOWFLAKE_ROLE=ACCOUNTADMIN
 
-## Google Cloud Authentication
-Before running the project, authenticate with Google Cloud.
-Step 1: Enable Required APIs
-- Go to: https://console.cloud.google.com
-- Navigate to: APIs & Services → Library
-- Enable: BigQuery API
+4. Create Snowflake objects (run in Snowflake worksheet)
+   CREATE DATABASE IF NOT EXISTS CRYPTO_DB;
+   CREATE SCHEMA IF NOT EXISTS CRYPTO_DB.RAW;
+   CREATE SCHEMA IF NOT EXISTS CRYPTO_DB.ANALYTICS;
+   CREATE WAREHOUSE IF NOT EXISTS CRYPTO_WH
+     WITH WAREHOUSE_SIZE = 'X-SMALL'
+     AUTO_SUSPEND = 60
+     AUTO_RESUME = TRUE;
 
-## Cloud Logging API
+5. Install and run
+   cd bitcoin_dagster
+   pip install -e .
+   cd ..
+   export $(cat .env | xargs)
+   dagster dev -m bitcoin_dagster
 
-Step 2: Create a Service Account
+   Open http://localhost:3000
+## Running the Pipeline
 
-- Go to IAM role: Service Accounts
-- Create a new service account
-  -- Assign the following roles:
-  -- BigQuery Admin or BigQuery Data Editor as Logs Writer
+### Option 1 - Launch script (recommended)
+   bash start.sh
 
-Step 3: Download JSON Key
-- Download the service account key and store it securely.
+### Option 2 - Manual
+   export $(cat .env | xargs)
+   dagster dev -m bitcoin_dagster
 
-Step 4: Configure Environment Variables
--
-- Create a .env file in the project root:
-- GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
-- PROJECT_ID=your_project_id
-- BQ_DATASET=du_data
-- BQ_TABLE=raw_university
+## Data Tests
 
-### Never commit .env or JSON credentials to version control.
+All layers have dbt schema tests:
+- Bronze: unique and not_null on id
+- Silver: not_null on id, candle_time
+- Gold: not_null on id, accepted_values on signal (BUY/SELL/HOLD)
+- Source: freshness check on CRYPTO_MARKET_RAW (warn: 1h, error: 6h)
 
-# Testing
-- Run tests from the root directory.
+## Incremental Models
 
-# Unit Tests
-- pytest tests/unit
--- Unit tests validate individual components such as the extractor logic.
+Two models use incremental materialisation with merge strategy:
+- incremental_raw (Bronze) — appends new raw records
+- scd2 (Gold) — tracks price changes as SCD Type 2 history
 
-# Running the ETL Pipeline
-From the project root:
-- python -m app.main
--- This command will:
-- Extract raw data
-- Transform and clean data
+## Snowflake Monitoring
 
-# Load processed data into BigQuery
+Two monitoring views created in CRYPTO_DB.ANALYTICS:
+- warehouse_monitoring — hourly credit usage per warehouse
+- query_monitoring — last 7 days query history with cost
 
-- view log execution status
+## Dependencies
 
-### Logging is configured in: app/logging_config.py
-
-# Technologies Used
-
-- Python 3.12
-
-- Pandas and requests
-
-- Pytest
-
-- Google Cloud Platform
-
-- BigQuery
-
+- dagster
+- dagster-dbt
+- dagster-snowflake
+- dagster-aws
+- dbt-snowflake
+- snowflake-connector-python
+- pandas
+- requests
 - python-dotenv
 
-# Best Practices
+## Deployment
 
-Use environment variables for secrets
+Supports Dagster Cloud hybrid deployment via dagster_cloud.yaml.
+The hybrid agent runs on your local Ubuntu machine while
+orchestration is managed by Dagster Cloud (ifistic.dagster.plus).
+## Schedule
 
-Never commit credentials
+The pipeline runs every hour via bitcoin_hourly_schedule.
+Enable it in the Dagster UI under Schedules.
 
-Assign least-privilege IAM roles
+## Author
 
-Separate configuration from logic
-
-Structured logging enabled
-
-Tests validate data integrity
-
-# Future Enhancements
-
-GitHub Actions CI/CD
-
-GCS staging layer
-
-Data validation with Great Expectations
-
-Airflow orchestration
-
-Monitoring dashboards
-
-Infrastructure as Code (Terraform)
-
-
-
-
-
-
+Ifiok Udoh — Data Engineer

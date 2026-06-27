@@ -1,32 +1,12 @@
-# Python
+venv/
 __pycache__/
 *.pyc
 *.pyo
-*.pyd
+target/
+dbt_packages/
+logs/
 *.log
-
-# Virtual environments
-.bitcoin_venv/
-.venv/
-env/
-
-# Dagster
-.dagster/
-.tmp_dagster_home*
-dagster.yaml
-
-# dbt
-crypto_dbt/target/
-crypto_dbt/logs/
-crypto_dbt/dbt_packages/
-
-# Secrets
+.tmp_dagster_home*/
 .env
-*.env
 profiles.yml
-*.pem
-*.key
-
-# OS
 .DS_Store
-Thumbs.db

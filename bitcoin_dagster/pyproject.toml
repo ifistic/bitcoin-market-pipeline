@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bitcoin_dagster"
+version = "0.1.0"
+dependencies = [
+    "dagster",
+    "dagster-dbt",
+    "dagster-snowflake",
+    "dagster-aws",
+    "dbt-snowflake",
+    "boto3",
+    "s3fs",
+    "pandas",
+    "pyarrow",
+    "requests",
+]
+
+[tool.dagster]
+module_name = "bitcoin_dagster"
+
+[tool.hatch.build.targets.wheel]
+packages = ["bitcoin_dagster"]

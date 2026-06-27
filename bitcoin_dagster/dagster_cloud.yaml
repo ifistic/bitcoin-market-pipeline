@@ -1,0 +1,5 @@
+locations:
+  - location_name: bitcoin_dagster
+    code_source:
+      package_name: bitcoin_dagster
+    executable_path: venv/bin/python
