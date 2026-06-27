@@ -1,7 +1,6 @@
 from pathlib import Path
 from dagster_dbt import DbtCliResource, DbtProject
 
-# bitcoin_dbt lives inside the Python package
 DBT_PROJECT_DIR = Path(__file__).parent / "bitcoin_dbt"
 
 bitcoin_dbt_project = DbtProject(
