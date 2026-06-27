@@ -7,6 +7,7 @@ name = "bitcoin_dagster"
 version = "0.1.0"
 dependencies = [
     "dagster",
+    "dagster-cloud",
     "dagster-dbt",
     "dagster-snowflake",
     "dagster-aws",
