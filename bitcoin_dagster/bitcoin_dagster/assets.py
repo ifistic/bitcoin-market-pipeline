@@ -35,12 +35,12 @@ def _retry(func, retries=3, delay=1, backoff=2):
 def _snowflake_conn():
     return snowflake.connector.connect(
         account=os.environ.get("SNOWFLAKE_ACCOUNT", "HWJYNTS-UI61119"),
-        user=os.environ["SNOWFLAKE_USER"],
-        password=os.environ["SNOWFLAKE_PASSWORD"],
-        database=os.environ["SNOWFLAKE_DATABASE"],
-        schema=os.environ["SNOWFLAKE_SCHEMA"],
+        user=os.environ.get("SNOWFLAKE_USER", ""),
+        password=os.environ.get("SNOWFLAKE_PASSWORD", ""),
+        database=os.environ.get("SNOWFLAKE_DATABASE", "CRYPTO_DB"),
+        schema=os.environ.get("SNOWFLAKE_SCHEMA", "RAW"),
         warehouse=os.environ.get("SNOWFLAKE_WAREHOUSE", "compute_wh"),
-        role=os.environ["SNOWFLAKE_ROLE"],
+        role=os.environ.get("SNOWFLAKE_ROLE", "ACCOUNTADMIN"),
     )
 
 @asset(group_name="ingestion")
