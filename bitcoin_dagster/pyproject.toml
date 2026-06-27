@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bitcoin_dagster"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
     "dagster",
     "dagster-cloud",
@@ -24,13 +24,8 @@ module_name = "bitcoin_dagster"
 
 [tool.hatch.build.targets.wheel]
 packages = ["bitcoin_dagster"]
-include = [
-    "bitcoin_dagster/**/*.py",
-    "bitcoin_dagster/**/profiles.yml",
-    "bitcoin_dagster/**/dbt_project.yml",
-    "bitcoin_dagster/**/models/**",
-    "bitcoin_dagster/**/macros/**",
-    "bitcoin_dagster/**/seeds/**",
-    "bitcoin_dagster/**/snapshots/**",
-    "bitcoin_dagster/**/tests/**",
+
+[tool.hatch.build]
+artifacts = [
+    "bitcoin_dagster/bitcoin_dbt/**",
 ]
