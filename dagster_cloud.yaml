@@ -2,6 +2,6 @@ locations:
   - location_name: bitcoin_market_pipeline
     code_source:
       package_name: bitcoin_dagster
-    working_directory: .
+    working_directory: bitcoin_dagster
     build:
-      directory: .
+      directory: bitcoin_dagster
