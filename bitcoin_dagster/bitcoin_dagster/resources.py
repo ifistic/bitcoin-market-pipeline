@@ -1,12 +1,12 @@
 from pathlib import Path
 from dagster_dbt import DbtCliResource, DbtProject
 
+DBT_PROJECT_DIR = Path(__file__).parent.parent / "bitcoin_dbt"
+
 bitcoin_dbt_project = DbtProject(
-    project_dir=Path("/home/ifi/bitcoin-market-pipeline/bitcoin_dbt"),
-    profiles_dir=Path("/home/ifi/.dbt"),
+    project_dir=DBT_PROJECT_DIR,
 )
 
 dbt_resource = DbtCliResource(
     project_dir=bitcoin_dbt_project,
-    profiles_dir="/home/ifi/.dbt",
 )

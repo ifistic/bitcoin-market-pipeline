@@ -1,0 +1,78 @@
+version: 2
+
+models:
+  - name: silver_crypto
+    description: "Deduplicated and ranked crypto market data from raw source"
+    columns:
+      - name: id
+        description: "Coin identifier"
+        tests:
+          - not_null
+      - name: symbol
+        description: "Ticker symbol"
+      - name: name
+        description: "Coin name"
+      - name: current_price
+        description: "Latest price in USD"
+      - name: market_cap
+        description: "Market capitalisation"
+      - name: market_cap_rank
+        description: "Rank by market cap"
+      - name: total_volume
+        description: "24h trading volume"
+      - name: high_24h
+        description: "24h high price"
+      - name: low_24h
+        description: "24h low price"
+      - name: price_change_24h
+        description: "Absolute price change over 24h"
+      - name: price_change_percentage_24h
+        description: "Percentage price change over 24h"
+      - name: market_cap_change_24h
+        description: "Absolute market cap change over 24h"
+      - name: market_cap_change_percentage_24h
+        description: "Percentage market cap change over 24h"
+      - name: circulating_supply
+        description: "Circulating supply of coins"
+      - name: total_supply
+        description: "Total supply of coins"
+      - name: max_supply
+        description: "Maximum possible supply"
+      - name: ath
+        description: "All-time high price"
+      - name: ath_change_percentage
+        description: "Percentage change from all-time high"
+      - name: ath_date
+        description: "Date of all-time high"
+      - name: atl
+        description: "All-time low price"
+      - name: atl_change_percentage
+        description: "Percentage change from all-time low"
+      - name: atl_date
+        description: "Date of all-time low"
+      - name: last_updated
+        description: "Timestamp from CoinGecko"
+      - name: load_time
+        description: "Pipeline ingestion timestamp"
+      - name: rn
+        description: "Row number — 1 = latest record per id/load_time"
+
+  - name: candles
+    description: "Hourly OHLC candles derived from scd2 price history"
+    columns:
+      - name: id
+        description: "Coin identifier"
+        tests:
+          - not_null
+      - name: candle_time
+        description: "Hour-truncated timestamp for the candle"
+        tests:
+          - not_null
+      - name: open
+        description: "First price in the candle window"
+      - name: high
+        description: "Highest price in the candle window"
+      - name: low
+        description: "Lowest price in the candle window"
+      - name: close
+        description: "Last price in the candle window"

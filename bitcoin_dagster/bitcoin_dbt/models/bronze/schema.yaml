@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: raw_data
+    description: "Schema testing for raw data"
+    columns:
+      - name: id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
+
+  - name: incremental_raw
+    description: "Incremental raw data model"
+    columns:
+      - name: id
+        description: "The primary key for this table"
+        tests:
+          - unique
+          - not_null
