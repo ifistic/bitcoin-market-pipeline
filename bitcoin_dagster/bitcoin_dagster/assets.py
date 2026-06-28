@@ -1,16 +1,22 @@
 import os
 import time
 from datetime import datetime
-from pathlib import Path
 
 import pandas as pd
 import requests
 import snowflake.connector
 from snowflake.connector.pandas_tools import write_pandas
-from dagster import asset
+from dagster import asset, AssetExecutionContext
 from dotenv import load_dotenv
 
-# Load .env explicitly with absolute path
+from bitcoin_dagster.constants import (
+    COINGECKO_URL,
+    COINGECKO_VS_CURRENCY,
+    COINGECKO_PER_PAGE,
+    RAW_TABLE_NAME,
+)
+from bitcoin_dagster.partitions import daily_partition
+
 load_dotenv("/home/ifi/bitcoin-market-pipeline/.env", override=True)
 
 EXPECTED_COLUMNS = [
@@ -22,6 +28,7 @@ EXPECTED_COLUMNS = [
     "ath_date", "atl", "atl_change_percentage", "atl_date", "last_updated",
 ]
 
+
 def _retry(func, retries=3, delay=1, backoff=2):
     for i in range(retries):
         try:
@@ -31,6 +38,7 @@ def _retry(func, retries=3, delay=1, backoff=2):
                 raise
             time.sleep(delay)
             delay *= backoff
+
 
 def _snowflake_conn():
     return snowflake.connector.connect(
@@ -43,14 +51,30 @@ def _snowflake_conn():
         role=os.environ.get("SNOWFLAKE_ROLE", "ACCOUNTADMIN"),
     )
 
-@asset(group_name="ingestion")
-def coingecko_crypto_market():
+
+@asset(
+    group_name="ingestion",
+    partitions_def=daily_partition,
+    metadata={
+        "source": "CoinGecko API",
+        "destination": f"Snowflake: CRYPTO_DB.RAW.{RAW_TABLE_NAME}",
+        "description": "Top 250 crypto assets by market cap ingested daily",
+    },
+)
+def coingecko_crypto_market(context: AssetExecutionContext):
+    partition_date = context.partition_key
+    context.log.info(f"Running ingestion for partition: {partition_date}")
+
     # 1. Fetch
     def fetch():
         r = requests.get(
-            "https://api.coingecko.com/api/v3/coins/markets",
-            params={"vs_currency": "usd", "order": "market_cap_desc",
-                    "per_page": 250, "page": 1},
+            COINGECKO_URL,
+            params={
+                "vs_currency": COINGECKO_VS_CURRENCY,
+                "order": "market_cap_desc",
+                "per_page": COINGECKO_PER_PAGE,
+                "page": 1,
+            },
             timeout=30,
         )
         r.raise_for_status()
@@ -69,6 +93,7 @@ def coingecko_crypto_market():
     for col in ["ath_date", "atl_date", "last_updated"]:
         df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m-%d %H:%M:%S")
     df["load_time"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    df["partition_date"] = partition_date
 
     # 4. Uppercase columns for Snowflake
     df.columns = [c.upper() for c in df.columns]
@@ -77,9 +102,8 @@ def coingecko_crypto_market():
     def write_snowflake():
         conn = _snowflake_conn()
         cur = conn.cursor()
-        cur.execute("DROP TABLE IF EXISTS CRYPTO_MARKET_RAW")
-        cur.execute("""
-            CREATE TABLE CRYPTO_MARKET_RAW (
+        cur.execute(f"""
+            CREATE TABLE IF NOT EXISTS {RAW_TABLE_NAME} (
                 ID VARCHAR,
                 SYMBOL VARCHAR,
                 NAME VARCHAR,
@@ -103,11 +127,12 @@ def coingecko_crypto_market():
                 ATL_CHANGE_PERCENTAGE FLOAT,
                 ATL_DATE VARCHAR,
                 LAST_UPDATED VARCHAR,
-                LOAD_TIME VARCHAR
+                LOAD_TIME VARCHAR,
+                PARTITION_DATE VARCHAR
             )
         """)
         success, _, nrows, _ = write_pandas(
-            conn, df, "CRYPTO_MARKET_RAW",
+            conn, df, RAW_TABLE_NAME,
             overwrite=False,
             auto_create_table=False,
         )
@@ -116,4 +141,5 @@ def coingecko_crypto_market():
         return nrows
 
     nrows = _retry(write_snowflake)
-    return {"rows_loaded": nrows}
+    context.log.info(f"Loaded {nrows} rows for partition {partition_date}")
+    return {"rows_loaded": nrows, "partition_date": partition_date}
