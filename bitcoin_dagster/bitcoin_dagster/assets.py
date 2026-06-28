@@ -24,7 +24,6 @@ from bitcoin_dagster.constants import (
 from bitcoin_dagster.partitions import daily_partition
 from bitcoin_dagster.governance import (
     RAW_ASSET_METADATA,
-    raw_freshness_policy,
     run_governance_checks,
 )
 
@@ -57,7 +56,6 @@ def _snowflake_conn():
 @asset(
     group_name="ingestion",
     partitions_def=daily_partition,
-    freshness_policy=raw_freshness_policy,
     metadata=RAW_ASSET_METADATA,
 )
 def coingecko_crypto_market(context: AssetExecutionContext):

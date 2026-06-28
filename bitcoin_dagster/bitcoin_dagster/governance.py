@@ -1,34 +1,12 @@
 """
 Data Governance & Security module for the Bitcoin Market Pipeline.
-Covers: asset metadata, freshness policies, row count checks, and audit logging.
+Covers: asset metadata, quality checks, and audit logging.
 """
-import os
-from dagster import (
-    AssetExecutionContext,
-    FreshnessPolicy,
-    asset,
-    define_asset_job,
-    AssetSelection,
-)
 from bitcoin_dagster.constants import (
     SNOWFLAKE_DATABASE,
     SNOWFLAKE_RAW_SCHEMA,
     SNOWFLAKE_GOLD_SCHEMA,
     RAW_TABLE_NAME,
-)
-
-
-# ── Freshness Policies ────────────────────────────────────────────────────────
-# Raw ingestion should be no older than 2 hours
-raw_freshness_policy = FreshnessPolicy(
-    maximum_lag_minutes=120,
-    cron_schedule="0 * * * *",  # check every hour
-)
-
-# Gold layer should be no older than 3 hours
-gold_freshness_policy = FreshnessPolicy(
-    maximum_lag_minutes=180,
-    cron_schedule="0 * * * *",
 )
 
 
@@ -43,14 +21,6 @@ RAW_ASSET_METADATA = {
     "schema": SNOWFLAKE_RAW_SCHEMA,
     "table": RAW_TABLE_NAME,
     "freshness_sla": "2 hours",
-    "dagster/column_schema": {
-        "ID": "VARCHAR - Unique coin identifier",
-        "SYMBOL": "VARCHAR - Ticker symbol",
-        "CURRENT_PRICE": "FLOAT - Price in USD",
-        "MARKET_CAP": "FLOAT - Market capitalisation in USD",
-        "PARTITION_DATE": "VARCHAR - Dagster partition date",
-        "LOAD_TIME": "VARCHAR - UTC ingestion timestamp",
-    },
 }
 
 GOLD_ASSET_METADATA = {
@@ -67,23 +37,22 @@ GOLD_ASSET_METADATA = {
 
 # ── Data Quality Checks ───────────────────────────────────────────────────────
 def check_row_count(cur, table: str, schema: str, min_rows: int = 100) -> dict:
-    """Assert minimum row count for a table."""
     cur.execute(f"SELECT COUNT(*) FROM {schema}.{table}")
     count = cur.fetchone()[0]
-    passed = count >= min_rows
     return {
+        "check": "row_count",
         "table": f"{schema}.{table}",
         "row_count": count,
         "min_required": min_rows,
-        "passed": passed,
+        "passed": count >= min_rows,
     }
 
 
 def check_nulls(cur, table: str, schema: str, column: str) -> dict:
-    """Assert no nulls in a critical column."""
     cur.execute(f"SELECT COUNT(*) FROM {schema}.{table} WHERE {column} IS NULL")
     null_count = cur.fetchone()[0]
     return {
+        "check": "no_nulls",
         "table": f"{schema}.{table}",
         "column": column,
         "null_count": null_count,
@@ -92,23 +61,21 @@ def check_nulls(cur, table: str, schema: str, column: str) -> dict:
 
 
 def check_freshness(cur, table: str, schema: str, timestamp_col: str, max_hours: int = 2) -> dict:
-    """Assert data is not stale."""
     cur.execute(f"""
         SELECT DATEDIFF('hour', MAX({timestamp_col}::TIMESTAMP), CURRENT_TIMESTAMP())
         FROM {schema}.{table}
     """)
     hours_old = cur.fetchone()[0]
-    passed = hours_old is not None and hours_old <= max_hours
     return {
+        "check": "freshness",
         "table": f"{schema}.{table}",
         "hours_since_last_load": hours_old,
         "max_allowed_hours": max_hours,
-        "passed": passed,
+        "passed": hours_old is not None and hours_old <= max_hours,
     }
 
 
-def run_governance_checks(conn, context: AssetExecutionContext) -> list:
-    """Run all governance checks and log results."""
+def run_governance_checks(conn, context) -> list:
     cur = conn.cursor()
     results = []
 
@@ -120,8 +87,8 @@ def run_governance_checks(conn, context: AssetExecutionContext) -> list:
     ]
 
     for check in checks:
-        status = "✅ PASSED" if check["passed"] else "❌ FAILED"
-        context.log.info(f"Governance check {status}: {check}")
+        status = "PASSED" if check["passed"] else "FAILED"
+        context.log.info(f"Governance [{status}]: {check}")
         results.append(check)
 
     failed = [c for c in results if not c["passed"]]
