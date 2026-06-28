@@ -3,8 +3,7 @@ from bitcoin_dagster.constants import START_DATE, END_DATE
 
 # Hourly partition - matches the hourly ingestion schedule
 hourly_partition = dg.HourlyPartitionsDefinition(
-    start_date=START_DATE,
-    end_offset=1,
+    start_date=f"{START_DATE}-00:00",
 )
 
 # Daily partition - useful for dbt runs and backfills
