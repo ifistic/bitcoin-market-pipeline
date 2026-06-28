@@ -14,19 +14,16 @@ from bitcoin_dagster.constants import (
     COINGECKO_VS_CURRENCY,
     COINGECKO_PER_PAGE,
     RAW_TABLE_NAME,
+    EXPECTED_COLUMNS,
+    SNOWFLAKE_ACCOUNT,
+    SNOWFLAKE_DATABASE,
+    SNOWFLAKE_RAW_SCHEMA,
+    SNOWFLAKE_WAREHOUSE,
+    SNOWFLAKE_ROLE,
 )
 from bitcoin_dagster.partitions import daily_partition
 
 load_dotenv("/home/ifi/bitcoin-market-pipeline/.env", override=True)
-
-EXPECTED_COLUMNS = [
-    "id", "symbol", "name", "current_price", "market_cap", "market_cap_rank",
-    "total_volume", "high_24h", "low_24h", "price_change_24h",
-    "price_change_percentage_24h", "market_cap_change_24h",
-    "market_cap_change_percentage_24h", "circulating_supply",
-    "total_supply", "max_supply", "ath", "ath_change_percentage",
-    "ath_date", "atl", "atl_change_percentage", "atl_date", "last_updated",
-]
 
 
 def _retry(func, retries=3, delay=1, backoff=2):
@@ -42,13 +39,13 @@ def _retry(func, retries=3, delay=1, backoff=2):
 
 def _snowflake_conn():
     return snowflake.connector.connect(
-        account=os.environ.get("SNOWFLAKE_ACCOUNT", "HWJYNTS-UI61119"),
+        account=os.environ.get("SNOWFLAKE_ACCOUNT", SNOWFLAKE_ACCOUNT),
         user=os.environ.get("SNOWFLAKE_USER", ""),
         password=os.environ.get("SNOWFLAKE_PASSWORD", ""),
-        database=os.environ.get("SNOWFLAKE_DATABASE", "CRYPTO_DB"),
-        schema=os.environ.get("SNOWFLAKE_SCHEMA", "RAW"),
-        warehouse=os.environ.get("SNOWFLAKE_WAREHOUSE", "compute_wh"),
-        role=os.environ.get("SNOWFLAKE_ROLE", "ACCOUNTADMIN"),
+        database=os.environ.get("SNOWFLAKE_DATABASE", SNOWFLAKE_DATABASE),
+        schema=os.environ.get("SNOWFLAKE_SCHEMA", SNOWFLAKE_RAW_SCHEMA),
+        warehouse=os.environ.get("SNOWFLAKE_WAREHOUSE", SNOWFLAKE_WAREHOUSE),
+        role=os.environ.get("SNOWFLAKE_ROLE", SNOWFLAKE_ROLE),
     )
 
 
@@ -57,15 +54,18 @@ def _snowflake_conn():
     partitions_def=daily_partition,
     metadata={
         "source": "CoinGecko API",
-        "destination": f"Snowflake: CRYPTO_DB.RAW.{RAW_TABLE_NAME}",
+        "destination": f"Snowflake: {SNOWFLAKE_DATABASE}.{SNOWFLAKE_RAW_SCHEMA}.{RAW_TABLE_NAME}",
         "description": "Top 250 crypto assets by market cap ingested daily",
     },
 )
 def coingecko_crypto_market(context: AssetExecutionContext):
-    partition_date = context.partition_key
+    try:
+        partition_date = context.partition_key
+    except Exception:
+        partition_date = datetime.utcnow().strftime("%Y-%m-%d")
+
     context.log.info(f"Running ingestion for partition: {partition_date}")
 
-    # 1. Fetch
     def fetch():
         r = requests.get(
             COINGECKO_URL,
@@ -82,23 +82,19 @@ def coingecko_crypto_market(context: AssetExecutionContext):
 
     data = _retry(fetch)
 
-    # 2. Normalise
     df = pd.DataFrame([
         {k: float(v) if isinstance(v, int) else v for k, v in row.items()}
         for row in data
     ])
     df = df[[c for c in EXPECTED_COLUMNS if c in df.columns]]
 
-    # 3. Timestamps as strings
     for col in ["ath_date", "atl_date", "last_updated"]:
         df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m-%d %H:%M:%S")
     df["load_time"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     df["partition_date"] = partition_date
 
-    # 4. Uppercase columns for Snowflake
     df.columns = [c.upper() for c in df.columns]
 
-    # 5. Write to Snowflake
     def write_snowflake():
         conn = _snowflake_conn()
         cur = conn.cursor()
