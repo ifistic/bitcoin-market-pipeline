@@ -22,6 +22,11 @@ from bitcoin_dagster.constants import (
     SNOWFLAKE_ROLE,
 )
 from bitcoin_dagster.partitions import daily_partition
+from bitcoin_dagster.governance import (
+    RAW_ASSET_METADATA,
+    raw_freshness_policy,
+    run_governance_checks,
+)
 
 load_dotenv("/home/ifi/bitcoin-market-pipeline/.env", override=True)
 
@@ -52,11 +57,8 @@ def _snowflake_conn():
 @asset(
     group_name="ingestion",
     partitions_def=daily_partition,
-    metadata={
-        "source": "CoinGecko API",
-        "destination": f"Snowflake: {SNOWFLAKE_DATABASE}.{SNOWFLAKE_RAW_SCHEMA}.{RAW_TABLE_NAME}",
-        "description": "Top 250 crypto assets by market cap ingested daily",
-    },
+    freshness_policy=raw_freshness_policy,
+    metadata=RAW_ASSET_METADATA,
 )
 def coingecko_crypto_market(context: AssetExecutionContext):
     try:
@@ -98,7 +100,6 @@ def coingecko_crypto_market(context: AssetExecutionContext):
     def write_snowflake():
         conn = _snowflake_conn()
         cur = conn.cursor()
-        # Use CREATE OR REPLACE to ensure schema stays in sync
         cur.execute(f"""
             CREATE OR REPLACE TABLE {RAW_TABLE_NAME} (
                 ID VARCHAR,
@@ -133,6 +134,8 @@ def coingecko_crypto_market(context: AssetExecutionContext):
             overwrite=False,
             auto_create_table=False,
         )
+        # Run governance checks after write
+        run_governance_checks(conn, context)
         cur.close()
         conn.close()
         return nrows

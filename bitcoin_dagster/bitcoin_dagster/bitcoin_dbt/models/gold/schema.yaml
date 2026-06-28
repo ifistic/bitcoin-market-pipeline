@@ -1,86 +1,37 @@
 version: 2
 
 models:
-  - name: scd2
-    description: "SCD Type 2 incremental price history — one row per price change per coin"
+  - name: mkt_cap
+    description: "Gold layer - market cap rankings and trends"
+    meta:
+      owner: data-engineering
+      classification: internal
+      layer: gold
+      consumers: "Apache Superset"
     columns:
-      - name: id
-        description: "Coin identifier"
+      - name: ID
         tests:
           - not_null
-      - name: symbol
-        description: "Ticker symbol"
-      - name: name
-        description: "Coin name"
-      - name: current_price
-        description: "Price at the time of this record"
-      - name: market_cap
-        description: "Market capitalisation"
-      - name: market_cap_rank
-        description: "Rank by market cap"
-      - name: total_volume
-        description: "24h trading volume"
-      - name: valid_from
-        description: "Timestamp when this price became active"
-      - name: valid_to
-        description: "Timestamp when this price was superseded (NULL if current)"
-      - name: is_current
-        description: "TRUE if this is the latest price record for the coin"
 
   - name: indicators
-    description: "10 and 50 period moving averages computed over hourly candles"
-    columns:
-      - name: id
-        description: "Coin identifier"
-        tests:
-          - not_null
-      - name: candle_time
-        description: "Hourly candle timestamp"
-        tests:
-          - not_null
-      - name: close
-        description: "Closing price for the candle"
-      - name: ma_10
-        description: "10-period moving average of close price"
-      - name: ma_50
-        description: "50-period moving average of close price"
-
-  - name: mkt_cap
-    description: "Top 20 coins by market cap rank"
-    columns:
-      - name: symbol
-        description: "Ticker symbol"
-      - name: name
-        description: "Coin name"
-      - name: market_cap
-        description: "Market capitalisation"
-      - name: current_price
-        description: "Latest price in USD"
-      - name: market_cap_rank
-        description: "Rank by market cap"
-        tests:
-          - not_null
+    description: "Gold layer - technical indicators (RSI, moving averages)"
+    meta:
+      owner: data-engineering
+      classification: internal
+      layer: gold
+      consumers: "Apache Superset"
 
   - name: trading_signals
-    description: "Golden/death cross BUY/SELL/HOLD signals from MA crossovers"
-    columns:
-      - name: id
-        description: "Coin identifier"
-        tests:
-          - not_null
-      - name: candle_time
-        description: "Hourly candle timestamp"
-        tests:
-          - not_null
-      - name: close
-        description: "Closing price for the candle"
-      - name: ma_10
-        description: "10-period moving average"
-      - name: ma_50
-        description: "50-period moving average"
-      - name: signal
-        description: "BUY, SELL, or HOLD based on MA crossover"
-        tests:
-          - accepted_values:
-              arguments:
-                values: ['BUY', 'SELL', 'HOLD']
+    description: "Gold layer - buy/sell signals derived from indicators"
+    meta:
+      owner: data-engineering
+      classification: internal
+      layer: gold
+      consumers: "Apache Superset"
+
+  - name: scd2
+    description: "Gold layer - SCD Type 2 slowly changing dimensions for coin history"
+    meta:
+      owner: data-engineering
+      classification: internal
+      layer: gold
