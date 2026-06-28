@@ -1,13 +1,10 @@
-from dagster import ScheduleDefinition, define_asset_job, AssetSelection
+import dagster as dg
+from bitcoin_dagster.jobs import bitcoin_pipeline_job
+from bitcoin_dagster.partitions import daily_partition
 
-bitcoin_pipeline_job = define_asset_job(
-    name="bitcoin_pipeline_job",
-    selection=AssetSelection.all(),
-)
-
-hourly_schedule = ScheduleDefinition(
+hourly_schedule = dg.ScheduleDefinition(
     name="bitcoin_hourly_schedule",
     job=bitcoin_pipeline_job,
-    cron_schedule="0 * * * *",  # every hour on the hour
+    cron_schedule="0 * * * *",
     execution_timezone="UTC",
 )

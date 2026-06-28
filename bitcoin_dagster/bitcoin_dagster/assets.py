@@ -2,11 +2,11 @@ import os
 import time
 from datetime import datetime
 
+import dagster as dg
 import pandas as pd
 import requests
 import snowflake.connector
 from snowflake.connector.pandas_tools import write_pandas
-from dagster import asset, AssetExecutionContext
 from dotenv import load_dotenv
 
 from bitcoin_dagster.constants import (
@@ -22,10 +22,7 @@ from bitcoin_dagster.constants import (
     SNOWFLAKE_ROLE,
 )
 from bitcoin_dagster.partitions import daily_partition
-from bitcoin_dagster.governance import (
-    RAW_ASSET_METADATA,
-    run_governance_checks,
-)
+from bitcoin_dagster.governance import RAW_ASSET_METADATA, run_governance_checks
 
 load_dotenv("/home/ifi/bitcoin-market-pipeline/.env", override=True)
 
@@ -53,19 +50,20 @@ def _snowflake_conn():
     )
 
 
-@asset(
+@dg.asset(
     group_name="ingestion",
     partitions_def=daily_partition,
     metadata=RAW_ASSET_METADATA,
 )
-def coingecko_crypto_market(context: AssetExecutionContext):
-    try:
-        partition_date = context.partition_key
-    except Exception:
-        partition_date = datetime.utcnow().strftime("%Y-%m-%d")
+def coingecko_crypto_market(context: dg.AssetExecutionContext):
+    """
+    Top 250 crypto assets by market cap ingested daily from CoinGecko API
+    and written to Snowflake RAW layer.
+    """
+    period_to_fetch = context.partition_key
+    context.log.info(f"Running ingestion for partition: {period_to_fetch}")
 
-    context.log.info(f"Running ingestion for partition: {partition_date}")
-
+    # 1. Fetch from CoinGecko
     def fetch():
         r = requests.get(
             COINGECKO_URL,
@@ -82,19 +80,23 @@ def coingecko_crypto_market(context: AssetExecutionContext):
 
     data = _retry(fetch)
 
+    # 2. Normalise
     df = pd.DataFrame([
         {k: float(v) if isinstance(v, int) else v for k, v in row.items()}
         for row in data
     ])
     df = df[[c for c in EXPECTED_COLUMNS if c in df.columns]]
 
+    # 3. Timestamps as strings
     for col in ["ath_date", "atl_date", "last_updated"]:
         df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m-%d %H:%M:%S")
     df["load_time"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-    df["partition_date"] = partition_date
+    df["partition_date"] = period_to_fetch
 
+    # 4. Uppercase columns for Snowflake
     df.columns = [c.upper() for c in df.columns]
 
+    # 5. Write to Snowflake
     def write_snowflake():
         conn = _snowflake_conn()
         cur = conn.cursor()
@@ -132,12 +134,11 @@ def coingecko_crypto_market(context: AssetExecutionContext):
             overwrite=False,
             auto_create_table=False,
         )
-        # Run governance checks after write
         run_governance_checks(conn, context)
         cur.close()
         conn.close()
         return nrows
 
     nrows = _retry(write_snowflake)
-    context.log.info(f"Loaded {nrows} rows for partition {partition_date}")
-    return {"rows_loaded": nrows, "partition_date": partition_date}
+    context.log.info(f"Loaded {nrows} rows for partition {period_to_fetch}")
+    return {"rows_loaded": nrows, "partition_date": period_to_fetch}
