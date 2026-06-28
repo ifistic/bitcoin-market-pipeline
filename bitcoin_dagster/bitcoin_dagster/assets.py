@@ -98,8 +98,9 @@ def coingecko_crypto_market(context: AssetExecutionContext):
     def write_snowflake():
         conn = _snowflake_conn()
         cur = conn.cursor()
+        # Use CREATE OR REPLACE to ensure schema stays in sync
         cur.execute(f"""
-            CREATE TABLE IF NOT EXISTS {RAW_TABLE_NAME} (
+            CREATE OR REPLACE TABLE {RAW_TABLE_NAME} (
                 ID VARCHAR,
                 SYMBOL VARCHAR,
                 NAME VARCHAR,
