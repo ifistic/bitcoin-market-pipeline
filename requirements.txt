@@ -12,7 +12,7 @@ dagster-dbt==0.28.1
  
 
 # Data & cloud utilities
-pyarrow==12.0.1
+pyarrow==14.0.2
 requests==2.31.0
 s3fs==2023.12.0
 sqlalchemy==2.0.22

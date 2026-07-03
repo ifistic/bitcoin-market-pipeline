@@ -60,7 +60,7 @@ def coingecko_crypto_market(context: dg.AssetExecutionContext):
     Top 250 crypto assets by market cap ingested daily from CoinGecko API
     and written to Snowflake RAW layer.
     """
-    period_to_fetch = context.partition_key
+    period_to_fetch = context.partition_key if context.has_partition_key else datetime.utcnow().strftime("%Y-%m-%d")
     context.log.info(f"Running ingestion for partition: {period_to_fetch}")
 
     # 1. Fetch from CoinGecko
