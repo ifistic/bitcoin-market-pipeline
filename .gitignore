@@ -2,7 +2,8 @@ venv/
 __pycache__/
 *.pyc
 *.pyo
-target/
+bitcoin_dbt/target/*
+!bitcoin_dbt/target/manifest.json
 dbt_packages/
 logs/
 *.log
