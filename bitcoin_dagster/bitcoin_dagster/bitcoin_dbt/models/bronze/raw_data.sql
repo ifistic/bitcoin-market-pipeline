@@ -23,5 +23,6 @@ select
   atl,
   atl_change_percentage,
   atl_date,
-  last_updated
+  last_updated,
+  load_time
 from {{ source('crypto', 'CRYPTO_MARKET_RAW') }}

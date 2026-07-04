@@ -1,6 +1,7 @@
 {{ config(materialized='view') }}
 
 SELECT
+    id,
     symbol,
     name,
     market_cap,

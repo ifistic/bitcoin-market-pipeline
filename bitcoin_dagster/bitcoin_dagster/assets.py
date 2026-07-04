@@ -24,7 +24,7 @@ from bitcoin_dagster.constants import (
 from bitcoin_dagster.partitions import daily_partition
 from bitcoin_dagster.governance import RAW_ASSET_METADATA, run_governance_checks
 
-load_dotenv("/home/ifi/bitcoin-market-pipeline/.env", override=True)
+load_dotenv("/home/ify/bitcoin-market-pipeline/.env", override=True)
 
 
 def _retry(func, retries=3, delay=1, backoff=2):
