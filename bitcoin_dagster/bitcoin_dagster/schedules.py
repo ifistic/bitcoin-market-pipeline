@@ -7,4 +7,5 @@ hourly_schedule = dg.ScheduleDefinition(
     job=bitcoin_pipeline_job,
     cron_schedule="0 * * * *",
     execution_timezone="UTC",
+    default_status=dg.DefaultScheduleStatus.STOPPED,
 )
