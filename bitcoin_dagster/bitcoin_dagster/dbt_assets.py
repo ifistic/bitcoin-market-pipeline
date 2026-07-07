@@ -2,7 +2,7 @@ from dagster import AssetExecutionContext
 from dagster_dbt import dbt_assets, DbtCliResource
 from .resources import bitcoin_dbt_project
 from .sensors import send_email, send_slack_message
-from .assets import _snowflake_conn
+from .snowflake_utils import _snowflake_conn
 
 
 @dbt_assets(

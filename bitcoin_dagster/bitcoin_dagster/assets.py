@@ -24,6 +24,7 @@ from bitcoin_dagster.constants import (
 from bitcoin_dagster.partitions import daily_partition
 from bitcoin_dagster.governance import RAW_ASSET_METADATA, run_governance_checks
 from bitcoin_dagster.sensors import send_email, send_slack_message
+from bitcoin_dagster.snowflake_utils import _snowflake_conn
 
 load_dotenv("/home/ify/bitcoin-market-pipeline/.env", override=True)
 
@@ -39,16 +40,7 @@ def _retry(func, retries=3, delay=1, backoff=2):
             delay *= backoff
 
 
-def _snowflake_conn():
-    return snowflake.connector.connect(
-        account=os.environ.get("SNOWFLAKE_ACCOUNT", SNOWFLAKE_ACCOUNT),
-        user=os.environ.get("SNOWFLAKE_USER", ""),
-        password=os.environ.get("SNOWFLAKE_PASSWORD", ""),
-        database=os.environ.get("SNOWFLAKE_DATABASE", SNOWFLAKE_DATABASE),
-        schema=os.environ.get("SNOWFLAKE_SCHEMA", SNOWFLAKE_RAW_SCHEMA),
-        warehouse=os.environ.get("SNOWFLAKE_WAREHOUSE", SNOWFLAKE_WAREHOUSE),
-        role=os.environ.get("SNOWFLAKE_ROLE", SNOWFLAKE_ROLE),
-    )
+
 
 
 @dg.asset(
