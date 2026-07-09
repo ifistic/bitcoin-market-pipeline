@@ -5,7 +5,7 @@ from bitcoin_dagster.partitions import daily_partition
 hourly_schedule = dg.ScheduleDefinition(
     name="bitcoin_hourly_schedule",
     job=bitcoin_pipeline_job,
-    cron_schedule="0 * * * *",
+    cron_schedule="0 0 * * *",
     execution_timezone="UTC",
-    default_status=dg.DefaultScheduleStatus.STOPPED,
+    default_status=dg.DefaultScheduleStatus.RUNNING,
 )

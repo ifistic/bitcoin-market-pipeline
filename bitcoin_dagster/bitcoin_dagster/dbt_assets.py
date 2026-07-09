@@ -5,11 +5,13 @@ from dagster_dbt import dbt_assets, DbtCliResource
 from .resources import bitcoin_dbt_project
 from .sensors import send_email, send_slack_message
 from .snowflake_utils import _snowflake_conn
+from .assets import coingecko_crypto_market
 
 
 @dbt_assets(
     manifest=bitcoin_dbt_project.manifest_path,
     name="bitcoin_dbt_assets",
+    deps=[coingecko_crypto_market],
 )
 def bitcoin_dbt_assets(
     context: AssetExecutionContext,
