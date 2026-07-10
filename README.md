@@ -127,6 +127,11 @@ orchestration is managed by Dagster Cloud (ifistic.dagster.plus).
 
 The pipeline runs every hour via bitcoin_hourly_schedule.
 Enable it in the Dagster UI under Schedules.
+## Monitoring
+
+Live pipeline health and SCD2 model activity tracked via Grafana Cloud:
+
+![Grafana Dashboard](docs/images/grafana-dashboard.png)
 
 ## Author
 
