@@ -13,6 +13,7 @@ profiles.yml
 .DS_Store
 
 .venv/
-bitcoin_dagster/bitcoin_dagster/bitcoin_dbt/target/*
-!bitcoin_dagster/bitcoin_dagster/bitcoin_dbt/target/manifest.json
 .user.yml
+bitcoin_dagster/bitcoin_dagster/bitcoin_dbt/target/compiled/
+bitcoin_dagster/bitcoin_dagster/bitcoin_dbt/target/run/
+bitcoin_dagster/bitcoin_dagster/bitcoin_dbt/target/bitcoin_dbt_assets-*/
