@@ -7,7 +7,6 @@
         pre_hook="{{ close_out_current_rows() }}"
     )
 }}
-
 WITH source_data AS (
     SELECT
         id,
@@ -17,28 +16,15 @@ WITH source_data AS (
         market_cap,
         market_cap_rank,
         total_volume,
-        last_updated,
-        load_time,
-        ROW_NUMBER() OVER (
-            PARTITION BY id
-            ORDER BY load_time DESC, last_updated DESC
-        ) AS rn
-    FROM {{ ref('silver_crypto') }}
-),
-
-latest_per_id AS (
-    SELECT *
-    FROM source_data
-    WHERE rn = 1
+        load_time
+    FROM {{ ref('incremental_raw') }}
 )
-
 {% if is_incremental() %}
 , current_rows AS (
-    SELECT id, current_price
+    SELECT id, name
     FROM {{ this }}
     WHERE is_current = TRUE
 )
-
 SELECT
     s.id,
     s.symbol,
@@ -50,14 +36,12 @@ SELECT
     s.load_time AS valid_from,
     NULL AS valid_to,
     TRUE AS is_current
-FROM latest_per_id s
+FROM source_data s
 LEFT JOIN current_rows c
     ON s.id = c.id
-   AND s.current_price = c.current_price
+   AND s.name = c.name
 WHERE c.id IS NULL
-
 {% else %}
-
 SELECT
     id,
     symbol,
@@ -69,6 +53,5 @@ SELECT
     load_time AS valid_from,
     NULL AS valid_to,
     TRUE AS is_current
-FROM latest_per_id
-
+FROM source_data
 {% endif %}

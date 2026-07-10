@@ -11,3 +11,8 @@ logs/
 .env
 profiles.yml
 .DS_Store
+
+.venv/
+bitcoin_dagster/bitcoin_dagster/bitcoin_dbt/target/*
+!bitcoin_dagster/bitcoin_dagster/bitcoin_dbt/target/manifest.json
+.user.yml

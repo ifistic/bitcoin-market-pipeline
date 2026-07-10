@@ -4,19 +4,11 @@
     SET is_current = FALSE,
         valid_to = s.load_time
     FROM (
-        SELECT
-            id,
-            load_time,
-            current_price,
-            ROW_NUMBER() OVER (
-                PARTITION BY id
-                ORDER BY load_time DESC, last_updated DESC
-            ) AS rn
-        FROM {{ ref('silver_crypto') }}
+        SELECT id, name, load_time
+        FROM {{ ref('incremental_raw') }}
     ) s
-    WHERE s.rn = 1
-      AND t.id = s.id
+    WHERE t.id = s.id
       AND t.is_current = TRUE
-      AND t.current_price <> s.current_price
+      AND t.name <> s.name
 {% endif %}
 {% endmacro %}
