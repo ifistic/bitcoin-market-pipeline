@@ -53,8 +53,8 @@ def bitcoin_dbt_assets(
         cur2 = conn.cursor()
         cur2.execute("""
             SELECT id, symbol, name
-            FROM CRYPTO_DB.RAW_GOLD.SCD2
-            WHERE valid_from = (SELECT MAX(valid_from) FROM CRYPTO_DB.RAW_GOLD.SCD2)
+            FROM CRYPTO_DB.GOLD.SCD2
+            WHERE valid_from = (SELECT MAX(valid_from) FROM CRYPTO_DB.GOLD.SCD2)
         """)
         new_rows = cur2.fetchall()
         cur2.close()
