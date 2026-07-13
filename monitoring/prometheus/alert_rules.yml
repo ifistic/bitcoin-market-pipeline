@@ -1,0 +1,29 @@
+groups:
+  - name: bitcoin_pipeline_alerts
+    rules:
+      - alert: PipelineRunFailed
+        expr: bitcoin_pipeline_run_success == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Bitcoin pipeline run failed"
+          description: "The last bitcoin_pipeline_job run reported failure."
+
+      - alert: SCD2UnexpectedRowSpike
+        expr: bitcoin_scd2_rows_affected > 50
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SCD2 model inserted unusually many rows"
+          description: "{{ $value }} rows affected in the last SCD2 run — check for duplicate-row regression."
+
+      - alert: PipelineStale
+        expr: time() - push_time_seconds{job="bitcoin_pipeline"} > 90000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No pipeline metrics received recently"
+          description: "No push to Pushgateway in over 25 hours — pipeline may not be running on schedule."
