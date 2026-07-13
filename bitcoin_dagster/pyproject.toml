@@ -17,6 +17,7 @@ dependencies = [
     "pandas",
     "pyarrow",
     "requests",
+    "prometheus_client",
 ]
 
 [tool.dagster]
