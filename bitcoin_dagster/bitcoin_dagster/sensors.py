@@ -18,25 +18,24 @@ def send_slack_message(text: str) -> None:
 
 
 def send_email(subject: str, body: str) -> None:
-    smtp_host = os.environ.get("SMTP_HOST")
-    smtp_port = int(os.environ.get("SMTP_PORT", "465"))
-    smtp_user = os.environ.get("SMTP_USER")
-    smtp_password = os.environ.get("SMTP_PASSWORD")
-    email_from = os.environ.get("EMAIL_FROM", smtp_user)
-    email_to = os.environ.get("EMAIL_TO")
-
-    if not all([smtp_host, smtp_user, smtp_password, email_to]):
-        return
-
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = email_from
-    msg["To"] = email_to
-
-    with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
-        server.login(smtp_user, smtp_password)
-        server.sendmail(email_from, [email_to], msg.as_string())
-
+    try:
+        smtp_host = os.environ.get("SMTP_HOST")
+        smtp_port = int(os.environ.get("SMTP_PORT", "465"))
+        smtp_user = os.environ.get("SMTP_USER")
+        smtp_password = os.environ.get("SMTP_PASSWORD")
+        email_from = os.environ.get("EMAIL_FROM", smtp_user)
+        email_to = os.environ.get("EMAIL_TO")
+        if not all([smtp_host, smtp_user, smtp_password, email_to]):
+            return
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = email_from
+        msg["To"] = email_to
+        with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=15) as server:
+            server.login(smtp_user, smtp_password)
+            server.sendmail(email_from, [email_to], msg.as_string())
+    except Exception as e:
+        print(f"[non-fatal] Email notification failed: {e}")
 
 def log_run_to_monitoring_table(context: RunStatusSensorContext, status: str) -> None:
     run_id = context.dagster_run.run_id
