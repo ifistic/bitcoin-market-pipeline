@@ -18,6 +18,8 @@ dependencies = [
     "pyarrow",
     "requests",
     "prometheus_client",
+    "great_expectations",
+    "snowflake-sqlalchemy",
 ]
 
 [tool.dagster]
