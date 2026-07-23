@@ -17,3 +17,24 @@ profiles.yml
 bitcoin_dagster/bitcoin_dagster/bitcoin_dbt/target/compiled/
 bitcoin_dagster/bitcoin_dagster/bitcoin_dbt/target/run/
 bitcoin_dagster/bitcoin_dagster/bitcoin_dbt/target/bitcoin_dbt_assets-*/
+
+# secrets
+newrelic.ini
+.env
+
+# editor backups
+*.bak
+
+# dagster local state
+.tmp_dagster_home_*/
+bitcoin_dagster/.tmp_dagster_home_*/
+
+# python
+__pycache__/
+*.pyc
+venv/
+
+# dbt artifacts (if not already ignored)
+bitcoin_dagster/bitcoin_dbt/target/
+bitcoin_dagster/bitcoin_dbt/logs/
+bitcoin_dagster/bitcoin_dbt/dbt_packages/
