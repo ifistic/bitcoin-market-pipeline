@@ -20,6 +20,7 @@ dependencies = [
     "prometheus_client",
     "great_expectations",
     "snowflake-sqlalchemy",
+    "newrelic",
 ]
 
 [tool.dagster]
