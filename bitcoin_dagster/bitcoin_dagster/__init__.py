@@ -1,3 +1,12 @@
+import os
+
+# New Relic must initialise BEFORE any other imports so subprocess
+# workers register the agent. No-op locally when NEW_RELIC_LICENSE_KEY
+# is unset.
+if os.environ.get("NEW_RELIC_LICENSE_KEY"):
+    import newrelic.agent
+    newrelic.agent.initialize()
+
 from dagster import Definitions, load_assets_from_modules
 from dagster_dbt import DbtCliResource
 from . import assets
@@ -6,6 +15,7 @@ from .gx_validation import bronze_ingestion_validation, scd2_integrity_validatio
 from .resources import dbt_resource
 from .schedules import hourly_schedule, bitcoin_pipeline_job
 from .sensors import bitcoin_pipeline_success_sensor, bitcoin_pipeline_failure_sensor
+
 all_assets = [
     *load_assets_from_modules([assets]),
     bitcoin_dbt_assets,
