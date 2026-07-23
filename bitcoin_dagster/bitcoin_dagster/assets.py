@@ -26,6 +26,28 @@ from bitcoin_dagster.governance import RAW_ASSET_METADATA, run_governance_checks
 from bitcoin_dagster.sensors import send_email, send_slack_message
 from bitcoin_dagster.snowflake_utils import _snowflake_conn
 
+try:
+    import newrelic.agent
+except ImportError:
+    class _NoopAgent:
+        @staticmethod
+        def background_task(*args, **kwargs):
+            def deco(func):
+                return func
+            return deco
+
+        @staticmethod
+        def function_trace(*args, **kwargs):
+            def deco(func):
+                return func
+            return deco
+
+        @staticmethod
+        def add_custom_attribute(*args, **kwargs):
+            pass
+
+    newrelic = type("newrelic", (), {"agent": _NoopAgent()})
+
 load_dotenv("/home/ify/bitcoin-market-pipeline/.env", override=True)
 
 
@@ -40,14 +62,12 @@ def _retry(func, retries=3, delay=1, backoff=2):
             delay *= backoff
 
 
-
-
-
 @dg.asset(
     group_name="ingestion",
     partitions_def=daily_partition,
     metadata=RAW_ASSET_METADATA,
 )
+@newrelic.agent.background_task(name="coingecko_crypto_market", group="Dagster")
 def coingecko_crypto_market(context: dg.AssetExecutionContext):
     """
     Top 250 crypto assets by market cap ingested daily from CoinGecko API
@@ -56,8 +76,11 @@ def coingecko_crypto_market(context: dg.AssetExecutionContext):
     period_to_fetch = context.partition_key if context.has_partition_key else datetime.utcnow().strftime("%Y-%m-%d")
     context.log.info(f"Running ingestion for partition: {period_to_fetch}")
 
+    newrelic.agent.add_custom_attribute("dagster_run_id", context.run_id)
+    newrelic.agent.add_custom_attribute("partition_date", period_to_fetch)
+
     try:
-        # 1. Fetch from CoinGecko
+        @newrelic.agent.function_trace(name="coingecko.get_markets")
         def fetch():
             r = requests.get(
                 COINGECKO_URL,
@@ -74,23 +97,20 @@ def coingecko_crypto_market(context: dg.AssetExecutionContext):
 
         data = _retry(fetch)
 
-        # 2. Normalise
         df = pd.DataFrame([
             {k: float(v) if isinstance(v, int) else v for k, v in row.items()}
             for row in data
         ])
         df = df[[c for c in EXPECTED_COLUMNS if c in df.columns]]
 
-        # 3. Timestamps as strings
         for col in ["ath_date", "atl_date", "last_updated"]:
             df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m-%d %H:%M:%S")
         df["load_time"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         df["partition_date"] = period_to_fetch
 
-        # 4. Uppercase columns for Snowflake
         df.columns = [c.upper() for c in df.columns]
 
-        # 5. Write to Snowflake
+        @newrelic.agent.function_trace(name="snowflake.write_markets")
         def write_snowflake():
             conn = _snowflake_conn()
             cur = conn.cursor()
